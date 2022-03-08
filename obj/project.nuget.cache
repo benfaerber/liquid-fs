@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "lsSiMHa6faNEF/uNs+vdYKkzFcQ4iTcLoY4omMrJRYT+/f2P4Q+GiHKLmM/rgg26PMnRUjKxHrFKqm/0IfJpcA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\bfaerber\\Documents\\Code\\liquid\\Liquid.fsproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\bfaerber\\.nuget\\packages\\fsharp.core\\6.0.1\\fsharp.core.6.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}
