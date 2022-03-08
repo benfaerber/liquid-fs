@@ -1,11 +1,6 @@
-﻿open System.Text.RegularExpressions
-open System.IO
-
-printfn "Hello from F#"
-
-let block_regex = "\{\%(\-)?(.+)(-)?\%\}"
-let output_regex = "\{\{(?:\s+)?(.+?)(?:\s+)?\}\}"
+﻿open System.IO
 
 let read_file filename = File.ReadAllText filename
 
-printfn "%s" (read_file "./test.liquid")
+let tokens = BroadTokenizer.get_liquid_tokens (read_file "./test.liquid")
+List.iter (fun a -> printfn "<---\n%s\n--->" a) tokens
