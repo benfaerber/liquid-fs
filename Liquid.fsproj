@@ -6,7 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="BroadTokenizer.fs" />
+    <Compile Include="Syntax.fs" />
+    <Compile Include="BlockTokenizer.fs" />
+    <Compile Include="LiquidLexer.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

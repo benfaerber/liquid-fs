@@ -1,6 +1,13 @@
 ﻿open System.IO
+open Syntax
 
 let read_file filename = File.ReadAllText filename
 
-let tokens = BroadTokenizer.get_liquid_tokens (read_file "./test.liquid")
-List.iter (fun a -> printfn "<---\n%s\n--->" a) tokens
+let tokens = BlockTokenizer.get_liquid_tokens (read_file "./test.liquid")
+// List.iter (fun block -> printfn "<---\n%s\n--->" block.Content) tokens
+let lexed, unlexed = LiquidLexer.lex_keyword "else apple = 12"
+let blexed, bunlexed = LiquidLexer.lex_bool "false apple = 12"
+
+match blexed with
+| Some x -> printfn "%s" (LiquidLexer.token_to_string x)
+| None -> printfn "None"

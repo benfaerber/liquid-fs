@@ -1,14 +1,14 @@
-module BroadTokenizer
+module BlockTokenizer
 
 open System.Text.RegularExpressions
+
+open Syntax
 
 type liquid_block =
   { Start: int
     Content: string
     Inside: string }
 
-let block_regex = "\{\%(?:\-)?(?:\s+)(.+)(?:\s+)(?:-)?\%\}"
-let output_regex = "\{\{(?:\s+)?(.+?)(?:\s+)?\}\}"
 
 let string_of_liquid_block =
   function
@@ -53,7 +53,7 @@ let get_non_liquid (text: string) lr =
 
 
 let get_liquid_tokens raw_liquid =
-  let matches: MatchCollection = Regex.Matches(raw_liquid, block_regex) in
+  let matches: MatchCollection = Regex.Matches(raw_liquid, both_regex) in
 
   let liquid_blocks = get_liquid_blocks matches in
 
@@ -62,11 +62,19 @@ let get_liquid_tokens raw_liquid =
 
   let paired =
     List.map2
-      (fun a b -> a, b)
+      (fun l_block c_block -> l_block, c_block)
       ({ Start = 0; Content = ""; Inside = "" }
        :: liquid_blocks)
       content_blocks in
 
-  let tokens = List.fold (fun acc (a, b) -> acc @ [ a.Content; b ]) [] paired in
+  let tokens =
+    List.fold
+      (fun acc (l_block, c_block) ->
+        acc
+        @ [ { Content = l_block.Content
+              IsLiquid = true }
+            { Content = c_block; IsLiquid = false } ])
+      []
+      paired in
 
   tokens
