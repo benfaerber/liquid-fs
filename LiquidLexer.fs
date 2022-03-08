@@ -22,6 +22,7 @@ type token =
   | Comment
   | EndComment
   | Eq
+  | EqEq
   | Ne
   | Gt
   | Lt
@@ -56,6 +57,7 @@ let token_to_string =
   | Comment -> "Comment"
   | EndComment -> "EndComment"
   | Eq -> "Equals"
+  | EqEq -> "TestEquality"
   | Ne -> "NotEquals"
   | Gt -> "GreaterThan"
   | Lt -> "LessThan"
@@ -151,12 +153,35 @@ let lex_bool (s: string) =
   | None -> None, s
 
 let lex_string (s: string) =
-  let string_regex = "^(\'(?:.+?)(?:[^\\]\')|\"(?:.+?)(?:[^\\]\"))" in
+  let string_regex = "^(\'(?:.+?)(?:[^\\\\]\')|\"(?:.+?)(?:[^\\\\]\"))" in
 
   if Regex.IsMatch(s, string_regex) then
     let m = Regex.Match(s, string_regex) in
     let str_literal = m.Groups.[0].Value in
-    let quoteless = str_literal[1 .. str_literal.Length - 1] in
-    Some quoteless, s[str_literal.Length ..]
+    let quoteless = str_literal[1 .. str_literal.Length - 2] in
+    Some(String quoteless), s[str_literal.Length ..]
   else
     None, s
+
+(*
+| Eq -> "Equals"
+| Ne -> "NotEquals"
+| Gt -> "GreaterThan"
+| Lt -> "LessThan"
+| Gte -> "GreaterThanEquals"
+| Lte -> "LessThanEquals"
+| Or -> "Or"
+| And -> "And"
+*)
+
+let lex_operator (s: string) =
+  let operators =
+    [ "=", Eq
+      "==", EqEq
+      "!=", Ne
+      ">", Gt
+      "<", Lt
+      ">=", Gte
+      "<=", Lte
+      "or", Or
+      "and", And ] in
