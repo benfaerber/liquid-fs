@@ -25,10 +25,11 @@ let get_liquid_blocks (matches: MatchCollection) =
         { Start = m.Index
           Content = content.Value
           Inside = inside.Value }
-      | _ -> raise (System.ArgumentException("Bad Match!")))
+      | _ -> raise (System.ArgumentException ("Bad Match!")))
     (matches |> Seq.toList)
 
-let get_liquid_range = List.map (fun lb -> (lb.Start, lb.Start + lb.Content.Length))
+let get_liquid_range =
+  List.map (fun lb -> (lb.Start, lb.Start + lb.Content.Length))
 
 let in_liquid_range index lr =
   match List.tryFind (fun (start_pos, end_pos) -> index >= start_pos && index <= end_pos) lr with
@@ -36,7 +37,9 @@ let in_liquid_range index lr =
   | _ -> false
 
 let get_non_liquid (text: string) lr =
-  let chrs = List.mapi (fun index chr -> index, chr) (text |> Seq.toList) in
+  let chrs =
+    List.mapi (fun index chr -> index, chr) (text |> Seq.toList) in
+
   let liquid_delim = "---LIQ" in
 
   let built =
@@ -45,7 +48,7 @@ let get_non_liquid (text: string) lr =
         match in_liquid_range i lr with
         | true when acc.EndsWith liquid_delim -> acc
         | true -> acc + liquid_delim
-        | false -> acc + c.ToString())
+        | false -> acc + c.ToString ())
       ""
       chrs in
 
@@ -53,12 +56,15 @@ let get_non_liquid (text: string) lr =
 
 
 let get_liquid_tokens raw_liquid =
-  let matches: MatchCollection = Regex.Matches(raw_liquid, both_regex) in
+  let matches: MatchCollection =
+    Regex.Matches (raw_liquid, both_regex) in
 
   let liquid_blocks = get_liquid_blocks matches in
 
   let liquid_range = get_liquid_range liquid_blocks in
-  let content_blocks = get_non_liquid raw_liquid liquid_range in
+
+  let content_blocks =
+    get_non_liquid raw_liquid liquid_range in
 
   let paired =
     List.map2
