@@ -5,8 +5,8 @@ open System.Text.RegularExpressions
 open Syntax
 
 type liquid_block =
-  { Start: int
-    Content: string
+  { Start: int;
+    Content: string;
     Inside: string }
 
 
@@ -22,8 +22,8 @@ let get_liquid_blocks (matches: MatchCollection) =
     (fun (m: Match) ->
       match m.Groups |> Seq.toList with
       | content :: inside :: _ ->
-        { Start = m.Index
-          Content = content.Value
+        { Start = m.Index;
+          Content = content.Value;
           Inside = inside.Value }
       | _ -> raise (System.ArgumentException ("Bad Match!")))
     (matches |> Seq.toList)
@@ -77,8 +77,8 @@ let get_liquid_tokens raw_liquid =
     List.fold
       (fun acc (l_block, c_block) ->
         acc
-        @ [ { Content = l_block.Content
-              IsLiquid = true }
+        @ [ { Content = l_block.Content;
+              IsLiquid = true };
             { Content = c_block; IsLiquid = false } ])
       []
       paired in

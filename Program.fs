@@ -42,6 +42,7 @@ let lexed_result =
   |> read_file
   |> BlockTokenizer.get_liquid_tokens
   |> Lexer.lex_liquid_blocks
+//|> Tree.construct_syntax_tree
 
 print_blocks (lexed_result)
 
@@ -51,7 +52,32 @@ let test_eval statement =
   |> Lexer.lex_block
   |> Interpreter.interpret_statement
 
-printfn "%s" (test_eval "{% assign apple = 10 %}")
-printfn "%s" (test_eval "{% render 'horseradish' with x: 10 %}")
-printfn "%s" (test_eval "{% render 'pearsauce' %}")
-printfn "%s" (test_eval "{%- for winner in winners -%}")
+// printfn "%s" (test_eval "{% assign apple = 10 %}")
+// printfn "%s" (test_eval "{% render 'horseradish' with x: 10 %}")
+// printfn "%s" (test_eval "{% render 'pearsauce' %}")
+// printfn "%s" (test_eval "{%- for winner in winners -%}")
+
+(*
+Syntax Tree:
+Start If a == 10
+  echo a
+  Start if a == 10
+    echo a
+  End endif
+End endif
+
+*)
+
+let test_block_tree =
+  [ Liquid (Statement, [ If; Identifier "a"; EqEq; Number 10 ]);
+    Liquid (Output, [ Identifier "a" ]);
+    Liquid (Statement, [ If; Identifier "a"; EqEq; Number 10 ]);
+    Liquid (Output, [ Identifier "a" ]);
+    Liquid (Statement, [ EndIf ]);
+    Liquid (Output, [ Identifier "a" ]);
+    Liquid (Statement, [ EndIf ]);
+    Liquid (Output, [ Identifier "b" ]) ]
+
+test_block_tree
+|> Tree.construct_syntax_tree
+|> print_blocks
