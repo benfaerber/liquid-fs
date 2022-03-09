@@ -8,12 +8,17 @@ let tokens = BlockTokenizer.get_liquid_tokens (read_file "./test.liquid")
 
 let print_lex =
   function
-  | Some t, rest -> printfn "Lexed: %s" (LiquidLexer.token_to_string t)
-  | None, rest -> printfn "Lex Failed!"
+  | Some t, _ -> printfn "Lexed: %s" (Lexer.token_to_string t)
+  | None, _ -> printfn "Lex Failed!"
 
-print_lex (LiquidLexer.lex_keyword "else apple = 12")
-print_lex (LiquidLexer.lex_bool "false apple = 12")
-print_lex (LiquidLexer.lex_string "\"This is a string\" apple = 12")
-print_lex (LiquidLexer.lex_operator ">= 12")
-print_lex (LiquidLexer.lex_number "-100.84= 12")
-print_lex (LiquidLexer.lex_token "x")
+print_lex (Lexer.lex_keyword "else apple = 12")
+print_lex (Lexer.lex_bool "false apple = 12")
+print_lex (Lexer.lex_string "\"This is a string\" apple = 12")
+print_lex (Lexer.lex_keyword ">= 12")
+print_lex (Lexer.lex_number "-100.84= 12")
+print_lex (Lexer.lex_token "x")
+print_lex (Lexer.lex_token "|")
+print_lex (Lexer.lex_token "(1..10) pear")
+
+
+print_lex (Lexer.lex_token "apple = 10")

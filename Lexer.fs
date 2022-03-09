@@ -1,6 +1,7 @@
-module LiquidLexer
+module Lexer
 
 open System.Text.RegularExpressions
+
 let test_block = "{% assign alt = year | append: ' Winner' %}"
 
 type token =
@@ -21,6 +22,8 @@ type token =
   | EndUnless
   | Comment
   | EndComment
+  | With
+  | In
   | Eq
   | EqEq
   | Ne
@@ -30,10 +33,18 @@ type token =
   | Lte
   | Or
   | And
+  | Colon
+  | Comma
+  | Pipe
+  | Blank
+  | Empty
+  | Nil
+  | Break
   | Identifier of string
   | Boolean of bool
   | String of string
   | Number of float
+  | Range of int * int
 
 
 let starts_with_regex txt = "^(" + txt + ")"
@@ -53,6 +64,8 @@ let token_to_string =
   | Case -> "Case"
   | EndCase -> "EndCase"
   | When -> "When"
+  | With -> "With"
+  | In -> "In"
   | Unless -> "Unless"
   | EndUnless -> "EndUnless"
   | Comment -> "Comment"
@@ -66,10 +79,18 @@ let token_to_string =
   | Lte -> "LessThanEquals"
   | Or -> "Or"
   | And -> "And"
+  | Colon -> "Colon"
+  | Comma -> "Comma"
+  | Pipe -> "Pipe"
+  | Blank -> "Blank"
+  | Empty -> "Empty"
+  | Nil -> "Nil"
+  | Break -> "Break"
   | Identifier id -> sprintf "Identifier (%s)" id
   | Boolean b -> sprintf "Boolean (%s)" (if b then "True" else "False")
   | String s -> sprintf "String (%s)" s
   | Number n -> sprintf "Number (%f)" n
+  | Range (s, e) -> sprintf "Range (%d - %d)" s e
 
 
 let lex_keyword (s: string) =
@@ -86,11 +107,29 @@ let lex_keyword (s: string) =
       EndFor, "endfor"
       Case, "case"
       EndCase, "endcase"
+      With, "with"
       When, "when"
+      In, "in"
       Unless, "unless"
       EndUnless, "endunless"
       Comment, "comment"
-      EndComment, "endcomment" ] in
+      EndComment, "endcomment"
+      EqEq, "=="
+      Eq, "="
+      Ne, "!="
+      Gte, ">="
+      Lte, "<="
+      Gt, ">"
+      Lt, "<"
+      Or, "or"
+      And, "and"
+      Colon, ":"
+      Comma, ","
+      Empty, "empty"
+      Nil, "nil"
+      Blank, "blank"
+      Break, "break"
+      Pipe, "\|" ] in
 
   let found_keyword =
     (List.tryFind (fun (_, literal) -> Regex.IsMatch(s, starts_with_regex literal)) keywords) in
@@ -110,54 +149,40 @@ let lex_bool (s: string) =
   | Some l -> Some(Boolean(l = "true")), s[l.Length ..]
   | None -> None, s
 
-let lex_string (s: string) =
-  let string_regex = "^(\'(?:.+?)(?:[^\\\\]\')|\"(?:.+?)(?:[^\\\\]\"))" in
+let match_or_fail s regex modifier =
+  let r = starts_with_regex regex in
 
-  if Regex.IsMatch(s, string_regex) then
-    let m = Regex.Match(s, string_regex) in
-    let str_literal = m.Groups.[0].Value in
-    let quoteless = str_literal[1 .. str_literal.Length - 2] in
-    Some(String quoteless), s[str_literal.Length ..]
+  if Regex.IsMatch(s, r) then
+    let m = Regex.Match(s, r) in
+    let literal = m.Groups.[0].Value in
+    Some(modifier literal), s[literal.Length ..]
   else
     None, s
 
-(*
-| Eq -> "Equals"
-| Ne -> "NotEquals"
-| Gt -> "GreaterThan"
-| Lt -> "LessThan"
-| Gte -> "GreaterThanEquals"
-| Lte -> "LessThanEquals"
-| Or -> "Or"
-| And -> "And"
-*)
+let lex_string (s: string) =
+  let string_regex = "^(\'(?:.+?)(?:[^\\\\]\')|\"(?:.+?)(?:[^\\\\]\"))" in
 
-let lex_operator (s: string) =
-  let operators =
-    [ "==", EqEq
-      "=", Eq
-      "!=", Ne
-      ">=", Gte
-      "<=", Lte
-      ">", Gt
-      "<", Lt
-      "or", Or
-      "and", And ] in
-
-  let found =
-    List.tryFind (fun (literal, _) -> Regex.IsMatch(s, starts_with_regex literal)) operators in
-
-  match found with
-  | Some (l, t) -> Some t, s[l.Length ..]
-  | None -> None, s
+  match_or_fail s string_regex (fun literal -> String(literal[1 .. literal.Length - 2]))
 
 let lex_number (s: string) =
   let number_regex = "((?:-)?(?:\d+)(?:\.)?(?:\d+)?)" in
 
-  if Regex.IsMatch(s, starts_with_regex number_regex) then
-    let m = Regex.Match(s, starts_with_regex number_regex) in
-    let literal = m.Groups.[0].Value in
-    Some(Number((float) literal)), s[literal.Length ..]
+  match_or_fail s number_regex (fun literal -> Number(float literal))
+
+let lex_identifier (s: string) =
+  let identifier_regex = "([A-Za-z_](?:[A-Za-z0-9_\-\.]+)?)" in
+
+  match_or_fail s identifier_regex (fun literal -> Identifier literal)
+
+let lex_range (s: string) =
+  let range_regex = "\((\S+)\.\.(\S+)\)" in
+
+  if Regex.IsMatch(s, range_regex) then
+    let m = Regex.Match(s, range_regex) in
+
+    match m.Groups |> Seq.toList with
+    | literal :: rstart :: rend :: _ -> Some(Range(int rstart.Value, int rend.Value)), s[literal.Length ..]
+    | _ -> None, s
   else
     None, s
 
@@ -165,9 +190,10 @@ let lex_token (s: string) =
   let lexers =
     [ lex_keyword
       lex_number
-      lex_operator
       lex_string
-      lex_bool ] in
+      lex_bool
+      lex_range
+      lex_identifier ] in
 
   let found_lexer =
     List.tryFind
