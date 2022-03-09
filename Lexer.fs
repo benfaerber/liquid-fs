@@ -120,7 +120,10 @@ let block_to_string block =
 
        sprintf "Liquid (%s) - %s" block_name token_string)
 
-
+(*
+  Know Bug: Keywords are not read as words
+  Example: "forloop" -> parsed For, ID(loop)
+*)
 let lex_keyword (s: string) =
   let keywords =
     [ Assign, "assign"
