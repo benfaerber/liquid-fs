@@ -10,7 +10,7 @@ List.iter (fun block -> printfn "<---\n%s\n--->" block.Content) tokens
 
 let print_lex =
   function
-  | Some t, _ -> printfn "Lexed: %s" (Lexer.token_to_string t)
+  | Some t, _ -> printfn "Lexed: %s" (token_to_string t)
   | None, _ -> printfn "Lex Failed!"
 
 
@@ -27,7 +27,7 @@ let print_lex =
 // print_lex (Lexer.lex_token "apple = 10")
 let print_ast ast =
   ast
-  |> List.map (fun t -> Lexer.token_to_string t)
+  |> List.map (fun t -> token_to_string t)
   |> String.concat ", "
   |> printfn "%s"
 
@@ -35,7 +35,7 @@ let print_ast ast =
 // print_ast (Lexer.lex_block "product.name | replace: 'dog', 'cat'")
 
 let print_blocks blocks =
-  List.iter (fun block -> block |> Lexer.block_to_string |> printfn "%s") blocks
+  List.iter (fun block -> block |> block_to_string |> printfn "%s") blocks
 
 let lexed_result =
   "./test.liquid"
@@ -44,3 +44,14 @@ let lexed_result =
   |> Lexer.lex_liquid_blocks
 
 print_blocks (lexed_result)
+
+let test_eval statement =
+  statement
+  |> Lexer.get_tag_contents
+  |> Lexer.lex_block
+  |> Interpreter.interpret_statement
+
+printfn "%s" (test_eval "{% assign apple = 10 %}")
+printfn "%s" (test_eval "{% render 'horseradish' with x: 10 %}")
+printfn "%s" (test_eval "{% render 'pearsauce' %}")
+printfn "%s" (test_eval "{%- for winner in winners -%}")

@@ -4,166 +4,67 @@ open System.Text.RegularExpressions
 
 open Syntax
 
-let test_block =
-  "{% assign alt = year | append: ' Winner' %}"
+let starts_with_regex txt = $"^({txt})"
+let find_word_regex txt = $"^\\b({txt})\\b"
 
-type token =
-  | Assign
-  | Increment
-  | Decrement
-  | Render
-  | Include
-  | If
-  | Else
-  | EndIf
-  | For
-  | EndFor
-  | Case
-  | EndCase
-  | When
-  | Unless
-  | EndUnless
-  | Comment
-  | EndComment
-  | With
-  | In
-  | Eq
-  | EqEq
-  | Ne
-  | Gt
-  | Lt
-  | Gte
-  | Lte
-  | Or
-  | And
-  | Colon
-  | Comma
-  | Pipe
-  | Blank
-  | Empty
-  | Nil
-  | Break
-  | Identifier of string
-  | Boolean of bool
-  | String of string
-  | Number of float
-  | Range of int * int
-
-type block_type =
-  | Output
-  | Statement
-
-type block =
-  | Liquid of block_type * token list
-  | Text of string
-
-let starts_with_regex txt = "^(" + txt + ")"
-
-let token_to_string =
-  function
-  | Assign -> "Assign"
-  | Increment -> "Increment"
-  | Decrement -> "Decrement"
-  | Render -> "Render"
-  | Include -> "Include"
-  | If -> "If"
-  | Else -> "Else"
-  | EndIf -> "EndIf"
-  | For -> "For"
-  | EndFor -> "EndFor"
-  | Case -> "Case"
-  | EndCase -> "EndCase"
-  | When -> "When"
-  | With -> "With"
-  | In -> "In"
-  | Unless -> "Unless"
-  | EndUnless -> "EndUnless"
-  | Comment -> "Comment"
-  | EndComment -> "EndComment"
-  | Eq -> "Equals"
-  | EqEq -> "TestEquality"
-  | Ne -> "NotEquals"
-  | Gt -> "GreaterThan"
-  | Lt -> "LessThan"
-  | Gte -> "GreaterThanEquals"
-  | Lte -> "LessThanEquals"
-  | Or -> "Or"
-  | And -> "And"
-  | Colon -> "Colon"
-  | Comma -> "Comma"
-  | Pipe -> "Pipe"
-  | Blank -> "Blank"
-  | Empty -> "Empty"
-  | Nil -> "Nil"
-  | Break -> "Break"
-  | Identifier id -> sprintf "Identifier (%s)" id
-  | Boolean b -> sprintf "Boolean (%s)" (if b then "True" else "False")
-  | String s -> sprintf "String (%s)" s
-  | Number n -> sprintf "Number (%f)" n
-  | Range (s, e) -> sprintf "Range (%d - %d)" s e
-
-let block_to_string block =
-  sprintf
-    "Block (%s)"
-    (match block with
-     | Text _ -> "Text Block"
-     | Liquid (block_type, tokens) ->
-       let block_name =
-         match block_type with
-         | Statement -> "Statement"
-         | Output -> "Output" in
-
-       let token_string =
-         (tokens
-          |> List.map (fun t -> token_to_string t)
-          |> String.concat ", ") in
-
-       sprintf "Liquid (%s) - %s" block_name token_string)
-
-(*
-  Know Bug: Keywords are not read as words
-  Example: "forloop" -> parsed For, ID(loop)
-*)
 let lex_keyword (s: string) =
   let keywords =
-    [ Assign, "assign"
-      Increment, "increment"
-      Decrement, "decrement"
-      Render, "render"
-      Include, "include"
-      If, "if"
-      Else, "else"
-      EndIf, "endif"
-      For, "for"
-      EndFor, "endfor"
-      Case, "case"
-      EndCase, "endcase"
-      With, "with"
-      When, "when"
-      In, "in"
-      Unless, "unless"
-      EndUnless, "endunless"
-      Comment, "comment"
-      EndComment, "endcomment"
-      EqEq, "=="
-      Eq, "="
-      Ne, "!="
-      Gte, ">="
-      Lte, "<="
-      Gt, ">"
-      Lt, "<"
-      Or, "or"
-      And, "and"
-      Colon, ":"
-      Comma, ","
-      Empty, "empty"
-      Nil, "nil"
-      Blank, "blank"
-      Break, "break"
+    [ Assign, "assign";
+      Increment, "increment";
+      Decrement, "decrement";
+      Render, "render";
+      Include, "include";
+      If, "if";
+      Else, "else";
+      EndIf, "endif";
+      For, "for";
+      EndFor, "endfor";
+      Case, "case";
+      EndCase, "endcase";
+      With, "with";
+      When, "when";
+      In, "in";
+      Unless, "unless";
+      EndUnless, "endunless";
+      Comment, "comment";
+      EndComment, "endcomment";
+      Capture, "capture";
+      EndCapture, "endcapture";
+      Empty, "empty";
+      Nil, "nil";
+      Blank, "blank";
+      Break, "break";
+      Continue, "continue";
+      Or, "or";
+      And, "and";
+
+      EqEq, "==";
+      Eq, "=";
+      Ne, "!=";
+      Gte, ">=";
+      Lte, "<=";
+      Gt, ">";
+      Lt, "<";
+
+      Colon, ":";
+      Comma, ",";
       Pipe, "\\|" ] in
 
+  let letters =
+    "abcdefghijklmnopqrstuvwxyz" |> Seq.toList in
+
+  let is_word txt =
+    let head = txt |> Seq.toList |> List.head in List.contains head letters
+
+  let get_regex lit =
+    lit
+    |> if is_word lit then
+         find_word_regex
+       else
+         starts_with_regex
+
   let found_keyword =
-    (List.tryFind (fun (_, literal) -> Regex.IsMatch (s, starts_with_regex literal)) keywords) in
+    (List.tryFind (fun (_, literal) -> Regex.IsMatch (s, get_regex literal)) keywords) in
 
   match found_keyword with
   | Some (token, literal) -> Some token, s[literal.Length ..]
@@ -227,11 +128,11 @@ let consume_whitespace (s: string) =
 let lex_token (s: string) =
 
   let lexers =
-    [ lex_keyword
-      lex_number
-      lex_string
-      lex_bool
-      lex_range
+    [ lex_keyword;
+      lex_number;
+      lex_string;
+      lex_bool;
+      lex_range;
       lex_identifier ] in
 
   let found_lexer =
@@ -267,7 +168,7 @@ let lex_block (s: string) =
   |> List.filter (fun opt -> opt.IsSome)
   |> List.map (fun opt -> opt.Value)
 
-let get_tag_innards txt =
+let get_tag_contents txt =
   let innards_regex =
     "(?:\{\%|\{\{)-?(?:\s+)?(.+?)(?:\s+)?-?(?:\%\}|\}\})" in
 
@@ -287,7 +188,7 @@ let lex_liquid_blocks blocks =
         let block_type = get_block_type block.Content in
 
         let tokens =
-          block.Content |> get_tag_innards |> lex_block in
+          block.Content |> get_tag_contents |> lex_block in
 
         Liquid (block_type, tokens)
       else
