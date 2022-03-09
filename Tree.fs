@@ -2,9 +2,21 @@ module Tree
 
 open Syntax
 
-type scope = { Parent: block; Children: block list }
 
-type tree = Branch of tree list
+type node =
+  | Block of block
+  | Scope of block * node list
+
+let rec syntax_tree_to_string =
+  function
+  | Block b -> block_to_string b
+  | Scope (parent, children) ->
+    sprintf
+      "Parent (%s) - Children (%s)"
+      (block_to_string parent)
+      (List.map syntax_tree_to_string children
+       |> String.concat ", ")
+
 
 let is_open_tag =
   function
@@ -88,14 +100,44 @@ let find_closing_tag (enumerated_blocks: (int * block) list) =
   end_index
 
 let enumerate collection = List.mapi (fun i v -> i, v) collection
-let unenumerate collection = List.map (fun (i, v) -> v) collection
+let unenumerate collection = List.map (fun (_, v) -> v) collection
+
+(*
+
+    let folder acc (index, block) =
+      match block with
+      | Text t -> []
+      | Liquid (bt, ts) -> []
+*)
 
 let construct_syntax_tree (blocks: block list) =
-  let wrapped_blocks =
-    [ Liquid (Statement, [ Capture; Identifier "_global_scope" ]) ]
-    @ blocks @ [ Liquid (Statement, [ EndCapture ]) ]
+  let enumerated_blocks = blocks |> enumerate in
 
-  let enumerated_blocks = wrapped_blocks |> enumerate in
+  let rec aux bs =
+    List.fold
+      (fun acc (index, block) ->
+        match block with
+        | Text t -> acc @ [ Block (Text t) ]
+        | Liquid (bt, tokens) ->
+          let is_opener = tokens |> List.head |> is_open_tag in
 
-  let folder acc (index, block) = 1
-  List.fold folder
+          if is_opener then
+            let close_point =
+              find_closing_tag (enumerated_blocks[index..]) in
+
+            acc
+            @ [ Scope (
+                  block,
+                  enumerated_blocks[index..close_point]
+                  |> unenumerate
+                  |> List.map (fun b -> Block b)
+                ) ]
+          else
+            acc @ [ Block (Liquid (bt, tokens)) ])
+      bs in
+
+
+  let global_scope =
+    Scope (Liquid (Statement, [ Capture; Identifier "_global_scope" ]), Block (aux enumerated_blocks)) in
+
+  global_scope

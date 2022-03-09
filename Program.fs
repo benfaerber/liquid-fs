@@ -80,4 +80,4 @@ let test_block_tree =
 
 test_block_tree
 |> Tree.construct_syntax_tree
-|> print_blocks
+|> Tree.syntax_tree_to_string
