@@ -2,20 +2,52 @@ module Tree
 
 open Syntax
 
+let is_debug_mode = false
+
+let sleep () =
+  if is_debug_mode then
+    Async.Sleep (500) |> Async.RunSynchronously
 
 type node =
   | Block of block
   | Scope of block * node list
 
-let rec syntax_tree_to_string =
-  function
-  | Block b -> block_to_string b
-  | Scope (parent, children) ->
-    sprintf
-      "Parent (%s) - Children (%s)"
-      (block_to_string parent)
-      (List.map syntax_tree_to_string children
-       |> String.concat ", ")
+let get_tabs count =
+  List.init count (fun _ -> "  ")
+  |> String.concat ""
+
+let r = System.Random ()
+
+let random_delims () =
+  match r.Next (9) with
+  | 1 -> "<", ">"
+  | 2 -> "[", "]"
+  | 3 -> "(", ")"
+  | 4 -> "{", "}"
+  | 5 -> "<-", "->"
+  | 6 -> "[-", "-]"
+  | 7 -> "(-", "-)"
+  | 8 -> "{-", "-}"
+  | _ -> "(", ")"
+
+
+let syntax_tree_to_string =
+  let rec aux tabs =
+    function
+    | Block b -> sprintf "%sBlock (%s)" (get_tabs tabs) (block_to_string b)
+    | Scope (parent, children) ->
+      let open_delim, close_delim = random_delims () in
+
+      sprintf
+        "%s\n%s%s\n%s%s\n%s"
+        open_delim
+        (get_tabs (tabs))
+        (block_to_string parent)
+        (get_tabs (tabs))
+
+        (List.map (fun c -> aux (tabs + 1) c) children
+         |> String.concat (sprintf ",\n%s" (get_tabs tabs)))
+        close_delim in aux 0
 
 
 let is_open_tag =
@@ -110,34 +142,42 @@ let unenumerate collection = List.map (fun (_, v) -> v) collection
       | Liquid (bt, ts) -> []
 *)
 
-let construct_syntax_tree (blocks: block list) =
+let rec construct_syntax_tree (blocks: block list) =
   let enumerated_blocks = blocks |> enumerate in
+  let max_index = (blocks |> List.length) - 1 in
 
-  let rec aux bs =
-    List.fold
-      (fun acc (index, block) ->
-        match block with
-        | Text t -> acc @ [ Block (Text t) ]
-        | Liquid (bt, tokens) ->
-          let is_opener = tokens |> List.head |> is_open_tag in
+  let rec aux start_index end_index =
 
-          if is_opener then
-            let close_point =
-              find_closing_tag (enumerated_blocks[index..]) in
+    List.unfold
+      (function
+      | index when index > end_index -> None
+      | index ->
+        sleep ()
+        // printfn "Index: %d" index
 
-            acc
-            @ [ Scope (
-                  block,
-                  enumerated_blocks[index..close_point]
-                  |> unenumerate
-                  |> List.map (fun b -> Block b)
-                ) ]
-          else
-            acc @ [ Block (Liquid (bt, tokens)) ])
-      bs in
+        (match blocks.[index] with
+         | Text t -> Some (Block (Text t), index + 1)
+         | Liquid (bt, tokens) ->
+           let is_opener = tokens |> List.head |> is_open_tag in
+           //  printfn "%s" (block_to_string (Liquid (bt, tokens)))
 
+           if is_opener then
+             let close_index =
+               find_closing_tag (enumerated_blocks[index..]) in
+
+             printfn "Closer %d" close_index
+
+             let scope =
+               Scope (blocks.[index], aux (index + 1) (close_index - 1)) in
+
+             Some (scope, close_index + 1)
+           else
+             Some (Block blocks.[index], index + 1)))
+      start_index in
+
+  let main_children = aux 0 max_index in
 
   let global_scope =
-    Scope (Liquid (Statement, [ Capture; Identifier "_global_scope" ]), Block (aux enumerated_blocks)) in
+    Liquid (Statement, [ Capture; Identifier "_global_scope" ]) in
 
-  global_scope
+  [ Scope (global_scope, main_children) ]
