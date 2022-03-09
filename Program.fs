@@ -5,7 +5,8 @@ let read_file filename = File.ReadAllText filename
 
 let tokens =
   BlockTokenizer.get_liquid_tokens (read_file "./test.liquid")
-// List.iter (fun block -> printfn "<---\n%s\n--->" block.Content) tokens
+
+List.iter (fun block -> printfn "<---\n%s\n--->" block.Content) tokens
 
 let print_lex =
   function
@@ -30,5 +31,16 @@ let print_ast ast =
   |> String.concat ", "
   |> printfn "%s"
 
-print_ast (Lexer.lex "assign apple = 10")
-print_ast (Lexer.lex "product.name | replace: 'dog', 'cat'")
+// print_ast (Lexer.lex_block "assign apple = 10")
+// print_ast (Lexer.lex_block "product.name | replace: 'dog', 'cat'")
+
+let print_blocks blocks =
+  List.iter (fun block -> block |> Lexer.block_to_string |> printfn "%s") blocks
+
+let lexed_result =
+  "./test.liquid"
+  |> read_file
+  |> BlockTokenizer.get_liquid_tokens
+  |> Lexer.lex_liquid_blocks
+
+print_blocks (lexed_result)

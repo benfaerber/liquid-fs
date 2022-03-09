@@ -2,6 +2,8 @@ module Lexer
 
 open System.Text.RegularExpressions
 
+open Syntax
+
 let test_block =
   "{% assign alt = year | append: ' Winner' %}"
 
@@ -47,6 +49,13 @@ type token =
   | Number of float
   | Range of int * int
 
+type block_type =
+  | Output
+  | Statement
+
+type block =
+  | Liquid of block_type * token list
+  | Text of string
 
 let starts_with_regex txt = "^(" + txt + ")"
 
@@ -92,6 +101,24 @@ let token_to_string =
   | String s -> sprintf "String (%s)" s
   | Number n -> sprintf "Number (%f)" n
   | Range (s, e) -> sprintf "Range (%d - %d)" s e
+
+let block_to_string block =
+  sprintf
+    "Block (%s)"
+    (match block with
+     | Text _ -> "Text Block"
+     | Liquid (block_type, tokens) ->
+       let block_name =
+         match block_type with
+         | Statement -> "Statement"
+         | Output -> "Output" in
+
+       let token_string =
+         (tokens
+          |> List.map (fun t -> token_to_string t)
+          |> String.concat ", ") in
+
+       sprintf "Liquid (%s) - %s" block_name token_string)
 
 
 let lex_keyword (s: string) =
@@ -216,7 +243,7 @@ let lex_token (s: string) =
   | Some lexer -> lexer s
   | None -> None, s
 
-let lex (s: string) =
+let lex_block (s: string) =
   let generator =
     function
     | _, "" -> None
@@ -236,3 +263,30 @@ let lex (s: string) =
   ([ initial ] @ optional_ast)
   |> List.filter (fun opt -> opt.IsSome)
   |> List.map (fun opt -> opt.Value)
+
+let get_tag_innards txt =
+  let innards_regex =
+    "(?:\{\%|\{\{)-?(?:\s+)?(.+?)(?:\s+)?-?(?:\%\}|\}\})" in
+
+  let m = Regex.Match (txt, innards_regex) in
+  m.Groups.[1].Value
+
+let get_block_type txt =
+  if Regex.IsMatch (txt, "^(\{\{)") then
+    Output
+  else
+    Statement
+
+let lex_liquid_blocks blocks =
+  List.map
+    (fun block ->
+      if block.IsLiquid then
+        let block_type = get_block_type block.Content in
+
+        let tokens =
+          block.Content |> get_tag_innards |> lex_block in
+
+        Liquid (block_type, tokens)
+      else
+        Text block.Content)
+    blocks
