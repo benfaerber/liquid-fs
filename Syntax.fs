@@ -52,8 +52,7 @@ type token =
   | Nil
   | Break
   | Continue
-  | Identifier of string
-  | NestedId of string list
+  | Identifier of string list
   | Boolean of bool
   | String of string
   | Number of float
@@ -108,8 +107,7 @@ let token_to_string =
   | Nil -> "Nil"
   | Break -> "Break"
   | Continue -> "Continue"
-  | Identifier id -> sprintf "Identifier (%s)" id
-  | NestedId parts -> sprintf "NestedId (%s)" (String.concat "->" parts)
+  | Identifier parts -> sprintf "Identifier (%s)" (String.concat "->" parts)
   | Boolean b -> sprintf "Boolean (%s)" (if b then "True" else "False")
   | String s -> sprintf "String (%s)" s
   | Number n -> sprintf "Number (%f)" n
@@ -134,3 +132,8 @@ let block_to_string block =
 
 let reverse_tail lst =
   lst |> List.rev |> List.tail |> List.rev
+
+let identifier_to_string id =
+  match id with
+  | Identifier parts -> String.concat "->" parts
+  | _ -> ""

@@ -175,6 +175,10 @@ let rec construct_syntax_tree (blocks: block list) =
   let main_children = aux 0 max_index in
 
   let global_scope =
-    Liquid (Statement, [ Capture; Identifier "_global_scope" ]) in
+    Liquid (
+      Statement,
+      [ Capture;
+        Identifier [ "_global_scope" ] ]
+    ) in
 
   [ Scope (global_scope, main_children) ]

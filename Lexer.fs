@@ -106,7 +106,7 @@ let lex_number (s: string) =
 
   match_or_fail s number_regex (fun literal -> Number (float literal))
 
-let lex_nested_id (id: string) =
+let parse_identifier (id: string) =
   let dotted = id.Split (".") |> Seq.toList in
 
   let res =
@@ -127,13 +127,13 @@ let lex_nested_id (id: string) =
       else
         lst in
 
-  NestedId res
+  Identifier res
 
 let lex_identifier (s: string) =
   let identifier_regex =
     $"([A-Za-z_](?:[A-Za-z0-9_\-\.]+)?)(\[((\d+)|({string_regex}))\])?" in
 
-  match_or_fail s identifier_regex (fun literal -> lex_nested_id literal)
+  match_or_fail s identifier_regex parse_identifier
 
 
 let lex_range (s: string) =
