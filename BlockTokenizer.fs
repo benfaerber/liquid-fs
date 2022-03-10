@@ -38,8 +38,6 @@ let get_uncompressed_block_list (s: string) =
 
   List.unfold generator s
 
-let reverse_tail lst =
-  lst |> List.rev |> List.tail |> List.rev
 
 let compress_liquid_blocks blocks =
   let compressor acc curr =

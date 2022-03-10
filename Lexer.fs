@@ -106,11 +106,35 @@ let lex_number (s: string) =
 
   match_or_fail s number_regex (fun literal -> Number (float literal))
 
+let lex_nested_id (id: string) =
+  let dotted = id.Split (".") |> Seq.toList in
+
+  let res =
+    match dotted with
+    | [] -> [ "" ]
+    | lst ->
+      let last = lst |> List.rev |> List.head in
+      let all_but_last = lst |> reverse_tail in
+      let bracket_notation = "(.+?)\[(.+)\]" in
+
+      if Regex.IsMatch (last, bracket_notation) then
+        let m = Regex.Match (last, bracket_notation) in
+        let g = m.Groups in
+        let baseid = g.[1].Value in
+        let inbracks = g.[2].Value in
+
+        all_but_last @ [ baseid; inbracks ]
+      else
+        lst in
+
+  NestedId res
+
 let lex_identifier (s: string) =
   let identifier_regex =
     $"([A-Za-z_](?:[A-Za-z0-9_\-\.]+)?)(\[((\d+)|({string_regex}))\])?" in
 
-  match_or_fail s identifier_regex (fun literal -> Identifier literal)
+  match_or_fail s identifier_regex (fun literal -> lex_nested_id literal)
+
 
 let lex_range (s: string) =
   let range_regex = "\((\S+)\.\.(\S+)\)" in
@@ -119,7 +143,8 @@ let lex_range (s: string) =
     let m = Regex.Match (s, range_regex) in
 
     match m.Groups |> Seq.toList with
-    | literal :: rstart :: rend :: _ -> Some (Range (int rstart.Value, int rend.Value)), s[literal.Length ..]
+    | literal :: rstart :: rend :: _ ->
+      let startend = int rstart.Value, int rend.Value in Some (Range startend), s[literal.Length ..]
     | _ -> None, s
   else
     None, s
