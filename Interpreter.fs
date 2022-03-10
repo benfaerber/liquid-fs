@@ -18,4 +18,12 @@ Pipe - A function is called (lexical token is passed in)
 
 *)
 
+let get_param_count =
+  function
+  | Identifier _ :: Pipe :: Identifier _ :: Colon :: Value _ :: Comma :: Value _ :: tl -> 3
+  | Identifier _ :: Pipe :: Identifier _ :: Colon :: Value _ :: tl -> 2
+  | Identifier _ :: Pipe :: Identifier _ :: tl -> 1
+  | _ -> 0
+
+
 let interpret (ast: node list) = 1

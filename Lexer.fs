@@ -82,7 +82,7 @@ let lex_bool (s: string) =
     List.tryFind (fun lit -> Regex.IsMatch (s, starts_with_regex lit)) literals in
 
   match found with
-  | Some l -> Some (Boolean (l = "true")), s[l.Length ..]
+  | Some l -> Some (Value (Boolean (l = "true"))), s[l.Length ..]
   | None -> None, s
 
 let match_or_fail s regex modifier =
@@ -99,12 +99,12 @@ let string_regex =
   "^(\'(?:.+?)(?:[^\\\\]\')|\"(?:.+?)(?:[^\\\\]\"))"
 
 let lex_string (s: string) =
-  match_or_fail s string_regex (fun literal -> String (literal[1 .. literal.Length - 2]))
+  match_or_fail s string_regex (fun literal -> Value (String (literal[1 .. literal.Length - 2])))
 
 let lex_number (s: string) =
   let number_regex = "((?:-)?(?:\d+)(?:\.)?(?:\d+)?)" in
 
-  match_or_fail s number_regex (fun literal -> Number (float literal))
+  match_or_fail s number_regex (fun literal -> Value (Number (float literal)))
 
 let parse_identifier (id: string) =
   let dotted = id.Split (".") |> Seq.toList in

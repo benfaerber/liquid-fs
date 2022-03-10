@@ -34,8 +34,8 @@ type liquid_filter =
 
 let truthy =
   function
-  | LNil
-  | LBoolean false -> false
+  | NilValue
+  | Boolean false -> false
   | _ -> true
 
 let falsy v = v |> truthy |> not
@@ -44,40 +44,32 @@ let self v = v
 
 let rec abs =
   function
-  | LNumber n when n < 0 -> LNumber (n * -1.)
-  | LNumber n -> LNumber n
-  | LString s -> abs (LNumber (float s))
-  | _ -> LNumber 0
+  | Number n when n < 0 -> Number (n * -1.)
+  | Number n -> Number n
+  | String s -> abs (Number (float s))
+  | _ -> Number 0
 
 let append liq_lst liq_val =
   match liq_lst with
-  | LList lst -> LList (lst @ [ liq_val ])
-  | _ -> LList []
+  | List lst -> List (lst @ [ liq_val ])
+  | _ -> List []
 
 let at_least given_lval min_lval =
   match given_lval, min_lval with
-  | LNumber gv, LNumber mv ->
-    if gv < mv then
-      LNumber mv
-    else
-      LNumber gv
-  | _ -> LNumber 0
+  | Number gv, Number mv -> if gv < mv then Number mv else Number gv
+  | _ -> Number 0
 
 let at_most given_lval max_lval =
   match given_lval, max_lval with
-  | LNumber gv, LNumber mv ->
-    if gv > mv then
-      LNumber mv
-    else
-      LNumber gv
-  | _ -> LNumber 0
+  | Number gv, Number mv -> if gv > mv then Number mv else Number gv
+  | _ -> Number 0
 
 
 let capitalize =
   function
-  | LString "" -> LString ""
-  | LString s ->
-    LString (
+  | String "" -> String ""
+  | String s ->
+    String (
       (s
        |> Seq.toList
        |> List.head
@@ -88,31 +80,31 @@ let capitalize =
          |> List.tail
          |> System.String.Concat)
     )
-  | _ -> LString ""
+  | _ -> String ""
 
 
 let ceil =
   function
-  | LNumber n -> LNumber (System.Math.Ceiling n)
-  | _ -> LNumber 0
+  | Number n -> Number (System.Math.Ceiling n)
+  | _ -> Number 0
 
 let compact =
   function
-  | LList lst ->
-    LList (
+  | List lst ->
+    List (
       List.filter
         (function
-        | LNil -> false
+        | NilValue -> false
         | _ -> true)
         lst
     )
-  | _ -> LList ([])
+  | _ -> List ([])
 
 
 let concat curr_li_list add_liq_list =
   match curr_li_list, add_liq_list with
-  | LList curr_list, LList add_list -> LList (curr_list @ add_list)
-  | _ -> LList []
+  | List curr_list, List add_list -> List (curr_list @ add_list)
+  | _ -> List []
 
 // Skipping Date for now
 // I need to decide how I will store liquid dates
@@ -125,72 +117,72 @@ let default_value lval ldef =
 
 let divided_by a b =
   match a, b with
-  | LNumber an, LNumber bn -> LNumber (an / bn)
-  | _ -> LNumber 0
+  | Number an, Number bn -> Number (an / bn)
+  | _ -> Number 0
 
 let downcase =
   function
-  | LString s ->
-    LString (
+  | String s ->
+    String (
       s
       |> Seq.toList
       |> List.map System.Char.ToLower
       |> System.String.Concat
     )
-  | _ -> LString ""
+  | _ -> String ""
 
 // Skipping escape and escaped once for now
 
 let first =
   function
-  | LList lst ->
+  | List lst ->
     (match lst with
      | hd :: _ -> hd
-     | _ -> LNil)
-  | _ -> LNil
+     | _ -> NilValue)
+  | _ -> NilValue
 
 
 let floor =
   function
-  | LNumber n -> LNumber (System.Math.Floor n)
-  | _ -> LNumber 0
+  | Number n -> Number (System.Math.Floor n)
+  | _ -> Number 0
 
 let join liq_arr liq_delim =
   match liq_arr, liq_delim with
-  | LList arr, LString delim ->
-    LString (
+  | List arr, String delim ->
+    String (
       arr
       |> (List.map (function
-        | LString s -> s
+        | String s -> s
         | _ -> ""))
       |> String.concat delim
     )
-  | _ -> LNil
+  | _ -> NilValue
 
 let last =
   function
-  | LList lst ->
+  | List lst ->
     (match lst |> List.rev with
      | hd :: _ -> hd
-     | _ -> LNil)
-  | _ -> LNil
+     | _ -> NilValue)
+  | _ -> NilValue
 
 let strip_whitespace from_start ls =
   match ls with
-  | LString s ->
+  | String s ->
     let reg =
       if from_start then
         "^(\s+)"
       else
         "(\s+)$" in
 
-    LString (
+    String (
       if Regex.IsMatch (s, reg) then
         Regex.Replace (s, reg, "")
       else
         s
     )
-  | _ -> LNil
+  | _ -> NilValue
 
 let lstrip = strip_whitespace true
 let rstrip = strip_whitespace false
@@ -199,71 +191,71 @@ let rstrip = strip_whitespace false
 
 let minus a b =
   match a, b with
-  | LNumber an, LNumber bn -> LNumber (an - bn)
-  | _ -> LNumber 0
+  | Number an, Number bn -> Number (an - bn)
+  | _ -> Number 0
 
 let modulo a b =
   match a, b with
-  | LNumber an, LNumber bn -> LNumber (an % bn)
-  | _ -> LNumber 0
+  | Number an, Number bn -> Number (an % bn)
+  | _ -> Number 0
 
 let newline_to_br =
   function
-  | LString s -> LString (s.Replace ("\n", "<br />"))
-  | _ -> LNil
+  | String s -> String (s.Replace ("\n", "<br />"))
+  | _ -> NilValue
 
 let plus a b =
   match a, b with
-  | LNumber an, LNumber bn -> LNumber (an + bn)
-  | _ -> LNumber 0
+  | Number an, Number bn -> Number (an + bn)
+  | _ -> Number 0
 
 let prepend liq_lst liq_val =
   match liq_lst with
-  | LList lst -> LList ([ liq_val ] @ lst)
-  | _ -> LList []
+  | List lst -> List ([ liq_val ] @ lst)
+  | _ -> List []
 
 let remove lhay lnee =
   match lhay, lnee with
-  | LString hay, LString nee -> LString (hay.Replace (nee, ""))
-  | _ -> LNil
+  | String hay, String nee -> String (hay.Replace (nee, ""))
+  | _ -> NilValue
 
 // TODO remove_first and replace_first
 
 
 let replace lhay lnee lrep =
   match lhay, lnee, lrep with
-  | LString hay, LString nee, LString rep -> LString (hay.Replace (nee, rep))
-  | _ -> LNil
+  | String hay, String nee, String rep -> String (hay.Replace (nee, rep))
+  | _ -> NilValue
 
 let reverse =
   function
-  | LList lst -> LList (lst |> List.rev)
-  | _ -> LNil
+  | List lst -> List (lst |> List.rev)
+  | _ -> NilValue
 
 let round =
   function
-  | LNumber n -> LNumber (System.Math.Round (n))
-  | _ -> LNil
+  | Number n -> Number (System.Math.Round (n))
+  | _ -> NilValue
 
 let round_to_places lnumber lplaces =
   match lnumber, lplaces with
-  | LNumber n, LNumber p -> LNumber (System.Math.Round (n, int p))
-  | _ -> LNil
+  | Number n, Number p -> Number (System.Math.Round (n, int p))
+  | _ -> NilValue
 
 let size =
   function
-  | LList lst -> LNumber (lst |> List.length |> float)
-  | _ -> LNil
+  | List lst -> Number (lst |> List.length |> float)
+  | _ -> NilValue
 
 let slice_start llst lstart =
   match llst, lstart with
-  | LList lst, LNumber lstart -> LList lst[int lstart ..]
-  | _ -> LNil
+  | List lst, Number lstart -> List lst[int lstart ..]
+  | _ -> NilValue
 
 let slice_start_end llst lstart lend =
   match llst, lstart, lend with
-  | LList lst, LNumber lstart, LNumber lend -> LList lst[int lstart .. int lend]
-  | _ -> LNil
+  | List lst, Number lstart, Number lend -> List lst[int lstart .. int lend]
+  | _ -> NilValue
 
 // TODO Add support of negative slices
 
@@ -271,65 +263,65 @@ let slice_start_end llst lstart lend =
 
 let split lstr ldelim =
   match lstr, ldelim with
-  | LString str, LString delim -> LList (List.map (fun s -> LString s) (str.Split (delim) |> Seq.toList))
-  | _ -> LNil
+  | String str, String delim -> List (List.map (fun s -> String s) (str.Split (delim) |> Seq.toList))
+  | _ -> NilValue
 
 let strip =
   function
-  | LString _ as s -> s |> lstrip |> rstrip
-  | _ -> LNil
+  | String _ as s -> s |> lstrip |> rstrip
+  | _ -> NilValue
 
 // TODO strip_html strip_newlines
 
 let times a b =
   match a, b with
-  | LNumber an, LNumber bn -> LNumber (an * bn)
-  | _ -> LNumber 0
+  | Number an, Number bn -> Number (an * bn)
+  | _ -> Number 0
 
 
 let truncate_custom lstr lchrs lcust =
   match lstr, lchrs, lcust with
-  | LString s, LNumber cs, LString cust ->
-    LString (
+  | String s, Number cs, String cust ->
+    String (
       if s.Length > int cs then
         s[.. int cs] + cust
       else
         s
     )
-  | _ -> LNil
+  | _ -> NilValue
 
 let truncate lstr lchrs =
-  truncate_custom lstr lchrs (LString "...")
+  truncate_custom lstr lchrs (String "...")
 
 let truncatewords_custom lstr lwrds lcust =
   match lstr, lwrds, lcust with
-  | LString s, LNumber wrds, LString cust ->
+  | String s, Number wrds, String cust ->
     let all_words = s.Split (" ") in
 
-    LString (
+    String (
       if all_words.Length > int wrds then
         (all_words[.. int wrds] |> String.concat " ")
         + cust
       else
         s
     )
-  | _ -> LNil
+  | _ -> NilValue
 
 let truncatewords lstr lwrds =
-  truncate_custom lstr lwrds (LString "...")
+  truncate_custom lstr lwrds (String "...")
 
 // TODO uniq
 
 let upcase =
   function
-  | LString s ->
-    LString (
+  | String s ->
+    String (
       s
       |> Seq.toList
       |> List.map System.Char.ToUpper
       |> System.String.Concat
     )
-  | _ -> LString ""
+  | _ -> String ""
 
 // TODO url_decode url_encode where
 

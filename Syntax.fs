@@ -13,6 +13,15 @@ let find_word_regex txt = $"^\\b({txt})\\b"
 
 type simple_block = { Content: string; IsLiquid: bool }
 
+type liquid_value =
+  | String of string
+  | Boolean of bool
+  | Number of float
+  | List of liquid_value list
+  | NilValue
+  | EmptyValue
+
+
 type token =
   | Assign
   | Increment
@@ -53,18 +62,8 @@ type token =
   | Break
   | Continue
   | Identifier of string list
-  | Boolean of bool
-  | String of string
-  | Number of float
+  | Value of liquid_value
   | Range of int * int
-
-type liquid_value =
-  | LString of string
-  | LBoolean of bool
-  | LNumber of float
-  | LList of liquid_value list
-  | LNil
-  | LEmpty
 
 type block_type =
   | Output
@@ -116,9 +115,9 @@ let token_to_string =
   | Break -> "Break"
   | Continue -> "Continue"
   | Identifier parts -> sprintf "Identifier (%s)" (String.concat "->" parts)
-  | Boolean b -> sprintf "Boolean (%s)" (if b then "True" else "False")
-  | String s -> sprintf "String (%s)" s
-  | Number n -> sprintf "Number (%f)" n
+  | Value (Boolean b) -> sprintf "Boolean (%s)" (if b then "True" else "False")
+  | Value (String s) -> sprintf "String (%s)" s
+  | Value (Number n) -> sprintf "Number (%f)" n
   | Range (s, e) -> sprintf "Range (%d - %d)" s e
 
 
