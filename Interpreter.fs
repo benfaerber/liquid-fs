@@ -18,12 +18,42 @@ Pipe - A function is called (lexical token is passed in)
 
 *)
 
+
 let get_param_count =
   function
-  | Identifier _ :: Pipe :: Identifier _ :: Colon :: Value _ :: Comma :: Value _ :: tl -> 3
-  | Identifier _ :: Pipe :: Identifier _ :: Colon :: Value _ :: tl -> 2
-  | Identifier _ :: Pipe :: Identifier _ :: tl -> 1
-  | _ -> 0
+  | 1 -> Filters.OneParam
+  | 2 -> Filters.TwoParam
+  | 3 -> Filters.ThreeParam
+  | _ -> Filters.OneParam
+
+
+let get_filter fs p_count =
+  Filters.get (fs |> List.head, get_param_count p_count)
+
+let run_func =
+  function
+  | Value v :: Pipe :: Identifier func_name :: Colon :: Value p1 :: Comma :: Value p2 :: tl ->
+    let filter =
+      match get_filter func_name 3 with
+      | Filters.Triple f -> f
+      | _ -> raise (System.ArgumentException "Bad Argument Count") in
+
+    filter v p1 p2
+  | Value v :: Pipe :: Identifier func_name :: Colon :: Value p1 :: tl ->
+    let filter =
+      match get_filter func_name 2 with
+      | Filters.Double f -> f
+      | _ -> raise (System.ArgumentException "Bad Argument Count") in
+
+    filter v p1
+  | Value v :: Pipe :: Identifier func_name :: tl ->
+    let filter =
+      match get_filter func_name 1 with
+      | Filters.Single f -> f
+      | _ -> raise (System.ArgumentException "Bad Argument Count") in
+
+    filter v
+  | _ -> NilValue
 
 
 let interpret (ast: node list) = 1
