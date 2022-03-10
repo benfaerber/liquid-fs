@@ -1,0 +1,9 @@
+{% assign time = 0 %}
+{% for count in (0..10) %}
+    {% if count == 2 %}
+        Wow! The count is two!
+    {% endif %}
+    Count: {{ count }}
+
+    {% assign time = time | plus: 1 %}
+{% endfor %}

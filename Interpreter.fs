@@ -2,13 +2,20 @@ module Interpreter
 
 open Syntax
 
-let rec interpret_statement =
-  function
-  | Assign :: Identifier name :: Eq :: tl ->
-    sprintf "Setting variable %s to value: %s" (identifier_to_string (Identifier name)) (interpret_statement tl)
-  | [ Render; String filename ] -> sprintf "Rendering %s" filename
-  | Render :: String filename :: With :: tl -> sprintf "Rendering %s with variables" filename
-  | [ Number n ] -> sprintf "%f" n
-  | [ Boolean b ] -> sprintf "%b" b
-  | [ String s ] -> sprintf "%s" s
-  | _ -> sprintf "Other"
+type execution_context = Map<string list, token>
+
+let context =
+  Map.empty.Add ([ "enviroment" ], String "Liquid F#")
+
+(*
+What can happen?
+
+Assign / Increment / Decrement - The variable context is updated and passed to the next statement
+If / Else / Unless - A condition is checked from the variable context, a new scope is run
+Case - A variable is looked up from the variable context, pattern matching is applies
+
+Pipe - A function is called (lexical token is passed in)
+
+*)
+
+let interpret (ast: node list) = 1

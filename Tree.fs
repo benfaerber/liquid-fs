@@ -8,10 +8,6 @@ let sleep () =
   if is_debug_mode then
     Async.Sleep (500) |> Async.RunSynchronously
 
-type node =
-  | Block of block
-  | Scope of block * node list
-
 let get_tabs count =
   List.init count (fun _ -> "  ")
   |> String.concat ""

@@ -140,10 +140,10 @@ let lex_range (s: string) =
   let range_regex = "\((\S+)\.\.(\S+)\)" in
 
   if Regex.IsMatch (s, range_regex) then
-    let m = Regex.Match (s, range_regex) in
+    let m = Regex.Match (s, starts_with_regex range_regex) in
 
     match m.Groups |> Seq.toList with
-    | literal :: rstart :: rend :: _ ->
+    | _ :: literal :: rstart :: rend :: _ ->
       let startend = int rstart.Value, int rend.Value in Some (Range startend), s[literal.Length ..]
     | _ -> None, s
   else

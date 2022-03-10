@@ -58,6 +58,14 @@ type token =
   | Number of float
   | Range of int * int
 
+type liquid_value =
+  | LString of string
+  | LBoolean of bool
+  | LNumber of float
+  | LList of liquid_value list
+  | LNil
+  | LEmpty
+
 type block_type =
   | Output
   | Statement
@@ -137,3 +145,7 @@ let identifier_to_string id =
   match id with
   | Identifier parts -> String.concat "->" parts
   | _ -> ""
+
+type node =
+  | Block of block
+  | Scope of block * node list
