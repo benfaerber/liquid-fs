@@ -4,8 +4,6 @@ open System.Text.RegularExpressions
 
 open Syntax
 
-let starts_with_regex txt = $"^({txt})"
-let find_word_regex txt = $"^\\b({txt})\\b"
 
 let lex_keyword (s: string) =
   let keywords =

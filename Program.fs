@@ -3,9 +3,6 @@ open Syntax
 
 let read_file filename = File.ReadAllText filename
 
-let tokens =
-  BlockTokenizer.get_liquid_tokens (read_file "./test.liquid")
-
 let print_lex =
   function
   | Some t, _ -> printfn "Lexed: %s" (token_to_string t)
@@ -36,17 +33,17 @@ let print_blocks blocks =
   List.iter (fun block -> block |> block_to_string |> printfn "%s") blocks
 
 let lexed_result =
-  "./test.liquid"
+  "./simple_test.liquid"
   |> read_file
-  |> BlockTokenizer.get_liquid_tokens
-  |> Lexer.lex_liquid_blocks
+  |> BlockTokenizer.get_liquid_blocks
+  |> BlockTokenizer.print_simple_blocks
 //|> Tree.construct_syntax_tree
 
-let test_eval statement =
-  statement
-  |> Lexer.get_tag_contents
-  |> Lexer.lex_block
-  |> Interpreter.interpret_statement
+// let test_eval statement =
+//   statement
+//   |> Lexer.get_tag_contents
+//   |> Lexer.lex_block
+//   |> Interpreter.interpret_statement
 // printfn "%s" (test_eval "{% assign apple = 10 %}")
 // printfn "%s" (test_eval "{% render 'horseradish' with x: 10 %}")
 // printfn "%s" (test_eval "{% render 'pearsauce' %}")
@@ -68,31 +65,40 @@ let test_eval statement =
   echo final
 *)
 
-let test_block_tree =
-  [ Liquid (
-      Statement,
-      [ If;
-        Identifier "counter";
-        EqEq;
-        Number 10 ]
-    );
-    Liquid (Output, [ Identifier "banana" ]);
-    Liquid (
-      Statement,
-      [ If;
-        Identifier "counter2";
-        EqEq;
-        Number 10 ]
-    );
-    Liquid (Output, [ Identifier "horse" ]);
-    Liquid (Output, [ Identifier "sheep" ]);
+// let test_block_tree =
+//   [ Liquid (
+//       Statement,
+//       [ If;
+//         Identifier "counter";
+//         EqEq;
+//         Number 10 ]
+//     );
+//     Liquid (Output, [ Identifier "banana" ]);
+//     Liquid (
+//       Statement,
+//       [ If;
+//         Identifier "counter2";
+//         EqEq;
+//         Number 10 ]
+//     );
+//     Liquid (Output, [ Identifier "horse" ]);
+//     Liquid (Output, [ Identifier "sheep" ]);
 
-    Liquid (Statement, [ EndIf ]);
-    Liquid (Output, [ Identifier "counter" ]);
-    Liquid (Statement, [ EndIf ]);
-    Liquid (Output, [ Identifier "final" ]) ]
+//     Liquid (Statement, [ EndIf ]);
+//     Liquid (Output, [ Identifier "counter" ]);
+//     Liquid (Statement, [ EndIf ]);
+//     Liquid (Output, [ Identifier "final" ]) ]
 
-test_block_tree
+// test_block_tree
+// |> Tree.construct_syntax_tree
+// |> List.map (fun x -> x |> Tree.syntax_tree_to_string)
+// |> String.concat "\n\n\n"
+// |> printfn "%s"
+
+"./simple_test.liquid"
+|> read_file
+|> BlockTokenizer.get_liquid_blocks
+|> Lexer.lex_liquid_blocks
 |> Tree.construct_syntax_tree
 |> List.map (fun x -> x |> Tree.syntax_tree_to_string)
 |> String.concat "\n\n\n"

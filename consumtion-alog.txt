@@ -1,0 +1,3 @@
+Consumes input letter by letter
+For each letter, if matches regex consume all matches add this match as a liquid block
+If letter does not match add it to the most recent text block

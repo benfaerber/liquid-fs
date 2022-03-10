@@ -157,15 +157,12 @@ let rec construct_syntax_tree (blocks: block list) =
 
         (match blocks.[index] with
          | Text t -> Some (Block (Text t), index + 1)
-         | Liquid (bt, tokens) ->
+         | Liquid (_, tokens) ->
            let is_opener = tokens |> List.head |> is_open_tag in
-           //  printfn "%s" (block_to_string (Liquid (bt, tokens)))
 
            if is_opener then
              let close_index =
                find_closing_tag (enumerated_blocks[index..]) in
-
-             printfn "Closer %d" close_index
 
              let scope =
                Scope (blocks.[index], aux (index + 1) (close_index - 1)) in

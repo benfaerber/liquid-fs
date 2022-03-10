@@ -8,6 +8,9 @@ let output_regex =
 
 let both_regex = block_regex + "|" + output_regex
 
+let starts_with_regex txt = $"^({txt})"
+let find_word_regex txt = $"^\\b({txt})\\b"
+
 type simple_block = { Content: string; IsLiquid: bool }
 
 type token =
