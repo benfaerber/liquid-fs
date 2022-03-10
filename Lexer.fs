@@ -12,6 +12,7 @@ let lex_keyword (s: string) =
       Decrement, "decrement";
       Render, "render";
       Include, "include";
+
       If, "if";
       Else, "else";
       EndIf, "endif";
@@ -19,20 +20,25 @@ let lex_keyword (s: string) =
       EndFor, "endfor";
       Case, "case";
       EndCase, "endcase";
+
       With, "with";
       When, "when";
       In, "in";
+
       Unless, "unless";
       EndUnless, "endunless";
       Comment, "comment";
       EndComment, "endcomment";
       Capture, "capture";
       EndCapture, "endcapture";
+
       Empty, "empty";
       Nil, "nil";
       Blank, "blank";
+
       Break, "break";
       Continue, "continue";
+
       Or, "or";
       And, "and";
 
@@ -89,10 +95,10 @@ let match_or_fail s regex modifier =
   else
     None, s
 
-let lex_string (s: string) =
-  let string_regex =
-    "^(\'(?:.+?)(?:[^\\\\]\')|\"(?:.+?)(?:[^\\\\]\"))" in
+let string_regex =
+  "^(\'(?:.+?)(?:[^\\\\]\')|\"(?:.+?)(?:[^\\\\]\"))"
 
+let lex_string (s: string) =
   match_or_fail s string_regex (fun literal -> String (literal[1 .. literal.Length - 2]))
 
 let lex_number (s: string) =
@@ -102,7 +108,7 @@ let lex_number (s: string) =
 
 let lex_identifier (s: string) =
   let identifier_regex =
-    "([A-Za-z_](?:[A-Za-z0-9_\-\.]+)?)" in
+    $"([A-Za-z_](?:[A-Za-z0-9_\-\.]+)?)(\[((\d+)|({string_regex}))\])?" in
 
   match_or_fail s identifier_regex (fun literal -> Identifier literal)
 
@@ -179,16 +185,13 @@ let get_block_type txt =
   else
     Statement
 
-let lex_liquid_blocks blocks =
+let lex_liquid_blocks =
   List.map
-    (fun block ->
-      if block.IsLiquid then
-        let block_type = get_block_type block.Content in
+    (fun { Content = content;
+           IsLiquid = is_liquid } ->
+      if is_liquid then
+        let tokens = content |> get_tag_contents |> lex_block in
 
-        let tokens =
-          block.Content |> get_tag_contents |> lex_block in
-
-        Liquid (block_type, tokens)
+        Liquid (get_block_type content, tokens)
       else
-        Text block.Content)
-    blocks
+        Text content)

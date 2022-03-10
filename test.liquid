@@ -52,17 +52,15 @@
   {% assign winners = winner_data | split: '| ' %}
     <div class="row">
       {% for winner in winners %}
-        {%liquid
-        if forloop.first
-          continue
-        endif
-        assign stats = winner | split: ', '
-        assign year = stats[0]
-        assign name = stats[1]
-        assign pumpkin = stats[2]
-        assign weight = stats[3]
-        assign img = stats[4]
-        %}
+        {% if forloop.first %}
+          {% continue %}
+        {% endif %}
+        {% assign stats = winner | split: ', ' %}
+        {% assign year = stats[0] %}
+        {% assign name = stats[1] %}
+        {% assign pumpkin = stats[2] %}
+        {% assign weight = stats[3] %}
+        {% assign img = stats[4] %}
 
         <div class="col-lg-6 col-sm-12">
           <div class="pumpkin-winner row-spacer">

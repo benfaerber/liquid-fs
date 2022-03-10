@@ -38,16 +38,20 @@ let get_uncompressed_block_list (s: string) =
 
   List.unfold generator s
 
+let reverse_tail lst =
+  lst |> List.rev |> List.tail |> List.rev
+
 let compress_liquid_blocks blocks =
   let compressor acc curr =
     let last = acc |> List.rev |> List.head in
-    let all_but_last = acc |> List.rev |> List.tail in
+
+    let all_but_last = reverse_tail acc in
 
     match curr with
-    | { Content = c; IsLiquid = true } -> acc @ [ { Content = c; IsLiquid = true } ]
-    | { Content = c; IsLiquid = false } ->
+    | { Content = c; IsLiquid = true } as liquid_block -> acc @ [ liquid_block ]
+    | { Content = c; IsLiquid = false } as text_block ->
       (match last with
-       | { Content = _; IsLiquid = true } -> acc @ [ { Content = c; IsLiquid = false } ]
+       | { Content = _; IsLiquid = true } -> acc @ [ text_block ]
        | { Content = last_content;
            IsLiquid = false } ->
          all_but_last
