@@ -73,8 +73,21 @@ type block =
   | Liquid of block_type * token list
   | Text of string
 
+let rec liquid_value_to_string =
+  function
+  | Boolean b -> sprintf "Boolean (%s)" (if b then "True" else "False")
+  | String s -> sprintf "String (%s)" s
+  | Number n -> sprintf "Number (%f)" n
+  | NilValue -> sprintf "NilValue"
+  | EmptyValue -> sprintf "EmptyValue"
+  | List l ->
+    sprintf
+      "List (%s)"
+      (l
+       |> List.map liquid_value_to_string
+       |> String.concat ", ")
 
-let token_to_string =
+let rec token_to_string =
   function
   | Assign -> "Assign"
   | Increment -> "Increment"
@@ -115,9 +128,7 @@ let token_to_string =
   | Break -> "Break"
   | Continue -> "Continue"
   | Identifier parts -> sprintf "Identifier (%s)" (String.concat "->" parts)
-  | Value (Boolean b) -> sprintf "Boolean (%s)" (if b then "True" else "False")
-  | Value (String s) -> sprintf "String (%s)" s
-  | Value (Number n) -> sprintf "Number (%f)" n
+  | Value v -> liquid_value_to_string v
   | Range (s, e) -> sprintf "Range (%d - %d)" s e
 
 

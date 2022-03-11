@@ -1,4 +1,4 @@
-module Filters
+module Filter
 
 open Syntax
 open System.Text.RegularExpressions
@@ -17,9 +17,6 @@ open System.Text.RegularExpressions
 *)
 
 // Refering to the number of parameters the function accepts
-type filter_1 = (liquid_value -> liquid_value)
-type filter_2 = (liquid_value -> liquid_value -> liquid_value)
-type filter_3 = (liquid_value -> liquid_value -> liquid_value -> liquid_value)
 
 type parameter_count =
   | OneParam
@@ -28,9 +25,20 @@ type parameter_count =
   | FourParam
 
 type liquid_filter =
-  | Single of (liquid_value -> liquid_value)
-  | Double of (liquid_value -> liquid_value -> liquid_value)
-  | Triple of (liquid_value -> liquid_value -> liquid_value -> liquid_value)
+  | OneArgument of (liquid_value -> liquid_value)
+  | TwoArgument of (liquid_value -> liquid_value -> liquid_value)
+  | ThreeArgument of (liquid_value -> liquid_value -> liquid_value -> liquid_value)
+  | FourArgument of (liquid_value -> liquid_value -> liquid_value -> liquid_value -> liquid_value)
+
+
+let get_param_count =
+  function
+  | 1 -> OneParam
+  | 2 -> TwoParam
+  | 3 -> ThreeParam
+  | 4 -> FourParam
+  | _ -> OneParam
+
 
 let truthy =
   function
@@ -338,44 +346,47 @@ let odne =
     s
 
 
-let get =
+let lookup_filter =
   function
-  | "abs", OneParam -> Single abs
-  | "append", TwoParam -> Double append
-  | "at_least", TwoParam -> Double at_least
-  | "at_most", TwoParam -> Double at_most
-  | "capitalize", OneParam -> Single capitalize
-  | "ceil", OneParam -> Single ceil
-  | "compact", OneParam -> Single compact
-  | "concat", TwoParam -> Double concat
-  | "default", OneParam -> Double default_value
-  | "divided_by", TwoParam -> Double divided_by
-  | "downcase", OneParam -> Single downcase
-  | "first", OneParam -> Single first
-  | "floor", OneParam -> Single floor
-  | "join", TwoParam -> Double join
-  | "last", OneParam -> Single last
-  | "lstrip", OneParam -> Single lstrip
-  | "rstrip", OneParam -> Single rstrip
-  | "minus", TwoParam -> Double minus
-  | "modulo", TwoParam -> Double modulo
-  | "newline_to_br", OneParam -> Single newline_to_br
-  | "plus", TwoParam -> Double plus
-  | "prepend", TwoParam -> Double prepend
-  | "remove", TwoParam -> Double remove
-  | "replace", ThreeParam -> Triple replace
-  | "reverse", OneParam -> Single reverse
-  | "round", OneParam -> Single round
-  | "round", TwoParam -> Double round_to_places
-  | "size", OneParam -> Single size
-  | "slice", TwoParam -> Double slice_start
-  | "slice", ThreeParam -> Triple slice_start_end
-  | "split", TwoParam -> Double split
-  | "strip", OneParam -> Single strip
-  | "times", TwoParam -> Double times
-  | "truncate", TwoParam -> Double truncate
-  | "truncate", ThreeParam -> Triple truncate_custom
-  | "truncatewords", TwoParam -> Double truncatewords
-  | "truncatewords", ThreeParam -> Triple truncatewords_custom
-  | "upcase", OneParam -> Single upcase
-  | _ -> Single self
+  | "abs", OneParam -> OneArgument abs
+  | "append", TwoParam -> TwoArgument append
+  | "at_least", TwoParam -> TwoArgument at_least
+  | "at_most", TwoParam -> TwoArgument at_most
+  | "capitalize", OneParam -> OneArgument capitalize
+  | "ceil", OneParam -> OneArgument ceil
+  | "compact", OneParam -> OneArgument compact
+  | "concat", TwoParam -> TwoArgument concat
+  | "default", OneParam -> TwoArgument default_value
+  | "divided_by", TwoParam -> TwoArgument divided_by
+  | "downcase", OneParam -> OneArgument downcase
+  | "first", OneParam -> OneArgument first
+  | "floor", OneParam -> OneArgument floor
+  | "join", TwoParam -> TwoArgument join
+  | "last", OneParam -> OneArgument last
+  | "lstrip", OneParam -> OneArgument lstrip
+  | "rstrip", OneParam -> OneArgument rstrip
+  | "minus", TwoParam -> TwoArgument minus
+  | "modulo", TwoParam -> TwoArgument modulo
+  | "newline_to_br", OneParam -> OneArgument newline_to_br
+  | "plus", TwoParam -> TwoArgument plus
+  | "prepend", TwoParam -> TwoArgument prepend
+  | "remove", TwoParam -> TwoArgument remove
+  | "replace", ThreeParam -> ThreeArgument replace
+  | "reverse", OneParam -> OneArgument reverse
+  | "round", OneParam -> OneArgument round
+  | "round", TwoParam -> TwoArgument round_to_places
+  | "size", OneParam -> OneArgument size
+  | "slice", TwoParam -> TwoArgument slice_start
+  | "slice", ThreeParam -> ThreeArgument slice_start_end
+  | "split", TwoParam -> TwoArgument split
+  | "strip", OneParam -> OneArgument strip
+  | "times", TwoParam -> TwoArgument times
+  | "truncate", TwoParam -> TwoArgument truncate
+  | "truncate", ThreeParam -> ThreeArgument truncate_custom
+  | "truncatewords", TwoParam -> TwoArgument truncatewords
+  | "truncatewords", ThreeParam -> ThreeArgument truncatewords_custom
+  | "upcase", OneParam -> OneArgument upcase
+  | _ -> raise (System.ArgumentException ("Function does not exists!"))
+
+let get filter_id param_count =
+  lookup_filter (filter_id |> List.head, get_param_count param_count)

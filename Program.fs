@@ -42,4 +42,6 @@ let print_syntax_tree_from_file filename =
   |> printfn "%s"
 
 
-print_syntax_tree_from_file "./liquid/simple_test.liquid"
+// print_syntax_tree_from_file "./liquid/simple_test.liquid"
+
+Interpreter.test ()
