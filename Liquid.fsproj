@@ -10,6 +10,7 @@
     <Compile Include="BlockTokenizer.fs" />
     <Compile Include="Lexer.fs" />
     <Compile Include="Tree.fs" />
+    <Compile Include="Std.fs" />
     <Compile Include="Filter.fs" />
     <Compile Include="Interpreter.fs" />
     <Compile Include="Program.fs" />

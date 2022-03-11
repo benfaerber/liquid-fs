@@ -37,301 +37,9 @@ let get_param_count =
   | 2 -> TwoParam
   | 3 -> ThreeParam
   | 4 -> FourParam
-  | _ -> OneParam
+  | _ -> raise (System.ArgumentException ("Invalid param count!"))
 
 
-let truthy =
-  function
-  | NilValue
-  | Boolean false -> false
-  | _ -> true
-
-let falsy v = v |> truthy |> not
-
-let self v = v
-
-let rec abs =
-  function
-  | Number n when n < 0 -> Number (n * -1.)
-  | Number n -> Number n
-  | String s -> abs (Number (float s))
-  | _ -> Number 0
-
-let append liq_lst liq_val =
-  match liq_lst with
-  | List lst -> List (lst @ [ liq_val ])
-  | _ -> List []
-
-let at_least given_lval min_lval =
-  match given_lval, min_lval with
-  | Number gv, Number mv -> if gv < mv then Number mv else Number gv
-  | _ -> Number 0
-
-let at_most given_lval max_lval =
-  match given_lval, max_lval with
-  | Number gv, Number mv -> if gv > mv then Number mv else Number gv
-  | _ -> Number 0
-
-
-let capitalize =
-  function
-  | String "" -> String ""
-  | String s ->
-    String (
-      (s
-       |> Seq.toList
-       |> List.head
-       |> System.Char.ToUpper)
-        .ToString ()
-      + (s
-         |> Seq.toList
-         |> List.tail
-         |> System.String.Concat)
-    )
-  | _ -> String ""
-
-
-let ceil =
-  function
-  | Number n -> Number (System.Math.Ceiling n)
-  | _ -> Number 0
-
-let compact =
-  function
-  | List lst ->
-    List (
-      List.filter
-        (function
-        | NilValue -> false
-        | _ -> true)
-        lst
-    )
-  | _ -> List ([])
-
-
-let concat curr_li_list add_liq_list =
-  match curr_li_list, add_liq_list with
-  | List curr_list, List add_list -> List (curr_list @ add_list)
-  | _ -> List []
-
-// Skipping Date for now
-// I need to decide how I will store liquid dates
-
-// Default is a keyword
-let default_value lval ldef =
-  match lval, ldef with
-  | v, _ when truthy v -> v
-  | _, d -> d
-
-let divided_by a b =
-  match a, b with
-  | Number an, Number bn -> Number (an / bn)
-  | _ -> Number 0
-
-let downcase =
-  function
-  | String s ->
-    String (
-      s
-      |> Seq.toList
-      |> List.map System.Char.ToLower
-      |> System.String.Concat
-    )
-  | _ -> String ""
-
-// Skipping escape and escaped once for now
-
-let first =
-  function
-  | List lst ->
-    (match lst with
-     | hd :: _ -> hd
-     | _ -> NilValue)
-  | _ -> NilValue
-
-
-let floor =
-  function
-  | Number n -> Number (System.Math.Floor n)
-  | _ -> Number 0
-
-let join liq_arr liq_delim =
-  match liq_arr, liq_delim with
-  | List arr, String delim ->
-    String (
-      arr
-      |> (List.map (function
-        | String s -> s
-        | _ -> ""))
-      |> String.concat delim
-    )
-  | _ -> NilValue
-
-let last =
-  function
-  | List lst ->
-    (match lst |> List.rev with
-     | hd :: _ -> hd
-     | _ -> NilValue)
-  | _ -> NilValue
-
-let strip_whitespace from_start ls =
-  match ls with
-  | String s ->
-    let reg =
-      if from_start then
-        "^(\s+)"
-      else
-        "(\s+)$" in
-
-    String (
-      if Regex.IsMatch (s, reg) then
-        Regex.Replace (s, reg, "")
-      else
-        s
-    )
-  | _ -> NilValue
-
-let lstrip = strip_whitespace true
-let rstrip = strip_whitespace false
-
-// Skip map for now, it requires access to var context
-
-let minus a b =
-  match a, b with
-  | Number an, Number bn -> Number (an - bn)
-  | _ -> Number 0
-
-let modulo a b =
-  match a, b with
-  | Number an, Number bn -> Number (an % bn)
-  | _ -> Number 0
-
-let newline_to_br =
-  function
-  | String s -> String (s.Replace ("\n", "<br />"))
-  | _ -> NilValue
-
-let plus a b =
-  match a, b with
-  | Number an, Number bn -> Number (an + bn)
-  | _ -> Number 0
-
-let prepend liq_lst liq_val =
-  match liq_lst with
-  | List lst -> List ([ liq_val ] @ lst)
-  | _ -> List []
-
-let remove lhay lnee =
-  match lhay, lnee with
-  | String hay, String nee -> String (hay.Replace (nee, ""))
-  | _ -> NilValue
-
-// TODO remove_first and replace_first
-
-
-let replace lhay lnee lrep =
-  match lhay, lnee, lrep with
-  | String hay, String nee, String rep -> String (hay.Replace (nee, rep))
-  | _ -> NilValue
-
-let reverse =
-  function
-  | List lst -> List (lst |> List.rev)
-  | _ -> NilValue
-
-let round =
-  function
-  | Number n -> Number (System.Math.Round (n))
-  | _ -> NilValue
-
-let round_to_places lnumber lplaces =
-  match lnumber, lplaces with
-  | Number n, Number p -> Number (System.Math.Round (n, int p))
-  | _ -> NilValue
-
-let size =
-  function
-  | List lst -> Number (lst |> List.length |> float)
-  | _ -> NilValue
-
-let slice_start llst lstart =
-  match llst, lstart with
-  | List lst, Number lstart -> List lst[int lstart ..]
-  | _ -> NilValue
-
-let slice_start_end llst lstart lend =
-  match llst, lstart, lend with
-  | List lst, Number lstart, Number lend -> List lst[int lstart .. int lend]
-  | _ -> NilValue
-
-// TODO Add support of negative slices
-
-// TODO sort and sort_natural
-
-let split lstr ldelim =
-  match lstr, ldelim with
-  | String str, String delim -> List (List.map (fun s -> String s) (str.Split (delim) |> Seq.toList))
-  | _ -> NilValue
-
-let strip =
-  function
-  | String _ as s -> s |> lstrip |> rstrip
-  | _ -> NilValue
-
-// TODO strip_html strip_newlines
-
-let times a b =
-  match a, b with
-  | Number an, Number bn -> Number (an * bn)
-  | _ -> Number 0
-
-
-let truncate_custom lstr lchrs lcust =
-  match lstr, lchrs, lcust with
-  | String s, Number cs, String cust ->
-    String (
-      if s.Length > int cs then
-        s[.. int cs] + cust
-      else
-        s
-    )
-  | _ -> NilValue
-
-let truncate lstr lchrs =
-  truncate_custom lstr lchrs (String "...")
-
-let truncatewords_custom lstr lwrds lcust =
-  match lstr, lwrds, lcust with
-  | String s, Number wrds, String cust ->
-    let all_words = s.Split (" ") in
-
-    String (
-      if all_words.Length > int wrds then
-        (all_words[.. int wrds] |> String.concat " ")
-        + cust
-      else
-        s
-    )
-  | _ -> NilValue
-
-let truncatewords lstr lwrds =
-  truncate_custom lstr lwrds (String "...")
-
-// TODO uniq
-
-let upcase =
-  function
-  | String s ->
-    String (
-      s
-      |> Seq.toList
-      |> List.map System.Char.ToUpper
-      |> System.String.Concat
-    )
-  | _ -> String ""
-
-// TODO url_decode url_encode where
 
 let nyi =
   function
@@ -348,44 +56,44 @@ let odne =
 
 let lookup_filter =
   function
-  | "abs", OneParam -> OneArgument abs
-  | "append", TwoParam -> TwoArgument append
-  | "at_least", TwoParam -> TwoArgument at_least
-  | "at_most", TwoParam -> TwoArgument at_most
-  | "capitalize", OneParam -> OneArgument capitalize
-  | "ceil", OneParam -> OneArgument ceil
-  | "compact", OneParam -> OneArgument compact
-  | "concat", TwoParam -> TwoArgument concat
-  | "default", OneParam -> TwoArgument default_value
-  | "divided_by", TwoParam -> TwoArgument divided_by
-  | "downcase", OneParam -> OneArgument downcase
-  | "first", OneParam -> OneArgument first
-  | "floor", OneParam -> OneArgument floor
-  | "join", TwoParam -> TwoArgument join
-  | "last", OneParam -> OneArgument last
-  | "lstrip", OneParam -> OneArgument lstrip
-  | "rstrip", OneParam -> OneArgument rstrip
-  | "minus", TwoParam -> TwoArgument minus
-  | "modulo", TwoParam -> TwoArgument modulo
-  | "newline_to_br", OneParam -> OneArgument newline_to_br
-  | "plus", TwoParam -> TwoArgument plus
-  | "prepend", TwoParam -> TwoArgument prepend
-  | "remove", TwoParam -> TwoArgument remove
-  | "replace", ThreeParam -> ThreeArgument replace
-  | "reverse", OneParam -> OneArgument reverse
-  | "round", OneParam -> OneArgument round
-  | "round", TwoParam -> TwoArgument round_to_places
-  | "size", OneParam -> OneArgument size
-  | "slice", TwoParam -> TwoArgument slice_start
-  | "slice", ThreeParam -> ThreeArgument slice_start_end
-  | "split", TwoParam -> TwoArgument split
-  | "strip", OneParam -> OneArgument strip
-  | "times", TwoParam -> TwoArgument times
-  | "truncate", TwoParam -> TwoArgument truncate
-  | "truncate", ThreeParam -> ThreeArgument truncate_custom
-  | "truncatewords", TwoParam -> TwoArgument truncatewords
-  | "truncatewords", ThreeParam -> ThreeArgument truncatewords_custom
-  | "upcase", OneParam -> OneArgument upcase
+  | "abs", OneParam -> OneArgument Std.abs
+  | "append", TwoParam -> TwoArgument Std.append
+  | "at_least", TwoParam -> TwoArgument Std.at_least
+  | "at_most", TwoParam -> TwoArgument Std.at_most
+  | "capitalize", OneParam -> OneArgument Std.capitalize
+  | "ceil", OneParam -> OneArgument Std.ceil
+  | "compact", OneParam -> OneArgument Std.compact
+  | "concat", TwoParam -> TwoArgument Std.concat
+  | "default", OneParam -> TwoArgument Std.default_value
+  | "divided_by", TwoParam -> TwoArgument Std.divided_by
+  | "downcase", OneParam -> OneArgument Std.downcase
+  | "first", OneParam -> OneArgument Std.first
+  | "floor", OneParam -> OneArgument Std.floor
+  | "join", TwoParam -> TwoArgument Std.join
+  | "last", OneParam -> OneArgument Std.last
+  | "lstrip", OneParam -> OneArgument Std.lstrip
+  | "rstrip", OneParam -> OneArgument Std.rstrip
+  | "minus", TwoParam -> TwoArgument Std.minus
+  | "modulo", TwoParam -> TwoArgument Std.modulo
+  | "newline_to_br", OneParam -> OneArgument Std.newline_to_br
+  | "plus", TwoParam -> TwoArgument Std.plus
+  | "prepend", TwoParam -> TwoArgument Std.prepend
+  | "remove", TwoParam -> TwoArgument Std.remove
+  | "replace", ThreeParam -> ThreeArgument Std.replace
+  | "reverse", OneParam -> OneArgument Std.reverse
+  | "round", OneParam -> OneArgument Std.round
+  | "round", TwoParam -> TwoArgument Std.round_to_places
+  | "size", OneParam -> OneArgument Std.size
+  | "slice", TwoParam -> TwoArgument Std.slice_start
+  | "slice", ThreeParam -> ThreeArgument Std.slice_start_end
+  | "split", TwoParam -> TwoArgument Std.split
+  | "strip", OneParam -> OneArgument Std.strip
+  | "times", TwoParam -> TwoArgument Std.times
+  | "truncate", TwoParam -> TwoArgument Std.truncate
+  | "truncate", ThreeParam -> ThreeArgument Std.truncate_custom
+  | "truncatewords", TwoParam -> TwoArgument Std.truncatewords
+  | "truncatewords", ThreeParam -> ThreeArgument Std.truncatewords_custom
+  | "upcase", OneParam -> OneArgument Std.upcase
   | _ -> raise (System.ArgumentException ("Function does not exists!"))
 
 let get filter_id param_count =
