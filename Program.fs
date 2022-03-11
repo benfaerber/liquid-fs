@@ -31,17 +31,25 @@ let print_ast ast =
 let print_blocks blocks =
   List.iter (fun block -> block |> block_to_string |> printfn "%s") blocks
 
-let print_syntax_tree_from_file filename =
+let generate_syntax_tree_from_file filename =
   filename
   |> read_file
   |> BlockTokenizer.get_liquid_blocks
   |> Lexer.lex_liquid_blocks
   |> Tree.construct_syntax_tree
+
+let print_syntax_tree_from_file filename =
+  filename
+  |> generate_syntax_tree_from_file
   |> List.map (fun x -> x |> Tree.syntax_tree_to_string)
   |> String.concat "\n\n\n"
   |> printfn "%s"
 
-
+let interpret_file filename =
+  filename
+  |> generate_syntax_tree_from_file
+  |> Interpreter.interpret
 // print_syntax_tree_from_file "./liquid/simple_test.liquid"
 
-Interpreter.test ()
+// Interpreter.test ()
+interpret_file "./liquid/simple_test.liquid"
