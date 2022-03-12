@@ -30,3 +30,16 @@ let render_file filename =
   |> interpret_file
   |> tap (fun r -> printfn "Rendered Liquid:\n------------\n%s\n------------" (r.Replace ("\n\n", "\n")))
   |> write_file (sprintf "%s-rendered.html" (filename.Replace (".liquid", "")))
+
+let test () =
+  [ Identifier [ "apple" ];
+    Operator EqEq;
+    Value (Number 10);
+    Or;
+    Identifier [ "pear" ];
+    Operator Lte;
+    Value (Number 6);
+    And;
+    Identifier [ "horse" ];
+    Operator EqEq;
+    Value (String "aassd") ]

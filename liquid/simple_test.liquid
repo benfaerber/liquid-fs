@@ -30,6 +30,18 @@ My favorite animal is a {{ animal | upcase }}!!!
 {% increment counter %}
 {% increment counter %}
 {% decrement counter %}
+
+{%- comment -%} TODO Create elif chains {%- endcomment -%}
+{% if time == 16 %}
+It is {{ time }}!
+{% endif %}
+
+{% assign person = "Sally Smith" %}
+
+{% if person contains "1Smith" %}
+You have a common last name!
+{% endif %}
+
 {% comment %}
 {% assign time = 0 %}
 {% for count in (0..10) %}

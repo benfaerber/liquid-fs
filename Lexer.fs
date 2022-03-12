@@ -42,13 +42,15 @@ let lex_keyword (s: string) =
       Or, "or";
       And, "and";
 
-      Eq, "=";
       Operator EqEq, "==";
       Operator Ne, "!=";
       Operator Gte, ">=";
       Operator Lte, "<=";
       Operator Gt, ">";
       Operator Lt, "<";
+      Operator Contains, "contains";
+
+      Eq, "=";
 
       Colon, ":";
       Comma, ",";

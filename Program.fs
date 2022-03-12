@@ -1,4 +1,5 @@
 ﻿let runner () =
-  Liquid.render_file "./liquid/simple_test.liquid"
+  Liquid.render_file "./liquid/forloop_test.liquid"
+  Liquid.test () |> ignore
 
 runner ()

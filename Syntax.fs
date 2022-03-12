@@ -28,6 +28,7 @@ type operator =
   | Lte
   | Gt
   | Lt
+  | Contains
 
 type token =
   | Assign
@@ -59,7 +60,6 @@ type token =
   | Pipe
   | Blank
   | Empty
-  | Contains
   | Nil
   | Break
   | Continue
@@ -122,7 +122,8 @@ let rec debug_token_to_string =
      | Gt -> "GreaterThan"
      | Lt -> "LessThan"
      | Gte -> "GreaterThanEquals"
-     | Lte -> "LessThanEquals")
+     | Lte -> "LessThanEquals"
+     | Contains -> "Contains")
   | Or -> "Or"
   | And -> "And"
   | Colon -> "Colon"
@@ -133,7 +134,6 @@ let rec debug_token_to_string =
   | Nil -> "Nil"
   | Break -> "Break"
   | Continue -> "Continue"
-  | Contains -> "Contains"
   | Identifier parts -> sprintf "Identifier (%s)" (String.concat "->" parts)
   | Value v -> debug_liquid_value_to_string v
   | Range (s, e) -> sprintf "Range (%d - %d)" s e

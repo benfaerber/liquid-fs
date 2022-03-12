@@ -1,71 +1,19 @@
-(
+<
 Liquid Statement - Capture, Identifier (_global_scope)
   Block (Text Block),
-  Block (Liquid Output - String (horse), Pipe, Identifier (capitalize)),
-  Block (Text Block),
-  Block (Liquid Output - String (a, b, c, d), Pipe, Identifier (split), Colon, String (, )),
-  Block (Text Block),
-  Block (Liquid Statement - Assign, Identifier (animal), Equals, String (sheep)),
-  Block (Text Block),
-  Block (Liquid Statement - Assign, Identifier (time), Equals, Number (10.000000)),
-  Block (Text Block),
-  Block (Liquid Statement - Assign, Identifier (screaming), Equals, String (i like dogs), Pipe, Identifier (upcase)),
-  Block (Text Block),
-  Block (Liquid Output - String (Lorem ipsum dolor, sit amet consectetur adipisicing elit.), Pipe, Identifier (truncate), Colon, Number (15.000000)),
-  Block (Text Block),
-  Block (Liquid Output - String (dog)),
-  Block (Text Block),
-  Block (Liquid Output - Identifier (animal)),
-  Block (Text Block),
-  Block (Liquid Output - Identifier (screaming)),
-  Block (Text Block),
-  Block (Liquid Output - Identifier (animal), Pipe, Identifier (capitalize), Pipe, Identifier (remove), Colon, String (h), Pipe, Identifier (slice), Colon, Number (0.000000), Comma, Number (2.000000)),
-  Block (Text Block),
-  Block (Liquid Statement - Assign, Identifier (slicer), Equals, Number (2.000000)),
-  Block (Text Block),
-  Block (Liquid Output - String (slice with var), Pipe, Identifier (slice), Colon, Identifier (slicer)),
-  Block (Text Block),
-  Block (Liquid Statement - Assign, Identifier (time), Equals, Identifier (time), Pipe, Identifier (plus), Colon, Number (6.000000)),
-  Block (Text Block),
-  Block (Liquid Output - Identifier (time)),
-  Block (Text Block),
-  Block (Liquid Statement - Assign, Identifier (bad_val), Equals, Nil),
-  Block (Text Block),
-  Block (Liquid Output - Identifier (bad_val)),
-  Block (Text Block),
-(
-  Liquid Statement - Capture, Identifier (test_capture)
+[
+  Liquid Statement - For, Identifier (i), In, Range (0 - 10)
       Block (Text Block),
-      Block (Liquid Output - Identifier (animal), Pipe, Identifier (upcase)),
+      Block (Liquid Output - Identifier (i)),
       Block (Text Block)
-),
+],
   Block (Text Block),
-  Block (Liquid Output - Identifier (test_capture)),
+  Block (Liquid Statement - Assign, Identifier (fruits), Equals, String (apple, pear, banana, peach), Pipe, Identifier (split), Colon, String (, )),
   Block (Text Block),
-  Block (Liquid Statement - Increment, Identifier (counter)),
-  Block (Text Block),
-  Block (Liquid Statement - Increment, Identifier (counter)),
-  Block (Text Block),
-  Block (Liquid Statement - Decrement, Identifier (counter)),
-  Block (Text Block),
-{-
-  Liquid Statement - Comment
+<
+  Liquid Statement - For, Identifier (fruit), In, Identifier (fruits)
       Block (Text Block),
-      Block (Liquid Statement - Assign, Identifier (time), Equals, Number (0.000000)),
-      Block (Text Block),
-  <-
-    Liquid Statement - For, Identifier (count), In, Range (0 - 10)
-          Block (Text Block),
-    (-
-      Liquid Statement - If, Identifier (count), Equals, Equals, Number (2.000000)
-              Block (Text Block)
--),
-          Block (Text Block),
-          Block (Liquid Output - Identifier (count)),
-          Block (Text Block),
-          Block (Liquid Statement - Assign, Identifier (time), Equals, Identifier (time), Pipe, Identifier (plus), Colon, Number (1.000000)),
-          Block (Text Block)
-->,
+      Block (Liquid Output - Identifier (fruit)),
       Block (Text Block)
--}
-)
+>
+>

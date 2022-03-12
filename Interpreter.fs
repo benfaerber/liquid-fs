@@ -97,7 +97,6 @@ let eval_liquid_statement (outp, ctx: execution_context) tokens =
   | [ Decrement; Identifier id ] -> increment_value (outp, ctx) id false
   | _ -> outp, ctx
 
-
 let eval_block (outp, ctx) =
   function
   | Text txt -> outp + txt, ctx
@@ -106,12 +105,75 @@ let eval_block (outp, ctx) =
     |> output_liquid_value (outp, ctx)
   | Liquid (Statement, tokens) -> eval_liquid_statement (outp, ctx) tokens
 
-let rec eval_scope (outp, ctx) parent children =
+
+let rec eval_condition (outp, ctx) tokens =
+  match tokens |> List.map (extract_value ctx) with
+  | [ Value a; Operator op; Value b ] -> Operation.eval_operation a op b
+  | Value a :: Operator op :: Value b :: And :: tl -> true
+  | Value a :: Operator op :: Value b :: Or :: tl -> true
+  | Value a :: And :: tl -> true
+  | Value a :: Or :: tl -> true
+  | _ -> true
+
+let range start_val end_val =
+  List.init (end_val - start_val) (fun i -> start_val + i)
+
+let range_to_list start_val end_val =
+  List (
+    range start_val end_val
+    |> List.map (fun v -> Number (int v))
+  )
+
+let rec eval_scope (outp, ctx: execution_context) parent children =
   match parent with
   | Liquid (_, tokens) ->
     match tokens with
-    | If :: tl -> (outp, ctx)
-    | For :: tl -> (outp, ctx)
+    | If :: tokens ->
+      debug_print_tokens tokens
+
+      if eval_condition (outp, ctx) tokens then
+        let eval_folder acc dnode =
+          match dnode with
+          | Block bl -> eval_block acc bl
+          | Scope (sp, sc) -> eval_scope acc sp sc in
+
+        let scope_outp, scope_cxt =
+          children |> List.fold eval_folder (outp, ctx) in
+
+        (outp + scope_outp, scope_cxt)
+      else
+        (outp, ctx)
+    | [ For; Identifier item; In; Range (rs, re) ] ->
+      let modified_for =
+        Liquid (
+          Statement,
+          [ For;
+            Identifier item;
+            In;
+            Value (range_to_list rs re) ]
+        ) in
+
+      eval_scope (outp, ctx) modified_for children
+    | [ For; Identifier item_name; In; collection ] ->
+      match collection |> extract_value ctx with
+      | Value (List lst) ->
+        let for_loop_iteration (ioutp, ictx: execution_context) item =
+          printfn "%s" (item |> value_to_string)
+
+          let eval_folder acc dnode =
+            match dnode with
+            | Block bl -> eval_block acc bl
+            | Scope (sp, sc) -> eval_scope acc sp sc in
+
+          let cap_outp, _ =
+            children
+            |> List.fold eval_folder (ioutp, ictx.Add (item_name, item)) in
+
+          cap_outp, ctx in
+
+        List.fold for_loop_iteration (outp, ctx) lst
+      | _ -> raise (System.ArgumentException ("Cannot loop over non list value!"))
+
     | Case :: tl -> (outp, ctx)
     | Unless :: tl -> (outp, ctx)
     | Comment :: tl -> (outp, ctx)

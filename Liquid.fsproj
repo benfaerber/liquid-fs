@@ -12,6 +12,7 @@
     <Compile Include="Tree.fs" />
     <Compile Include="Std.fs" />
     <Compile Include="Filter.fs" />
+    <Compile Include="Operation.fs" />
     <Compile Include="Interpreter.fs" />
     <Compile Include="Liquid.fs" />
     <Compile Include="Program.fs" />
