@@ -1,4 +1,4 @@
-[
+(
 Liquid Statement - Capture, Identifier (_global_scope)
   Block (Text Block),
   Block (Liquid Output - String (horse), Pipe, Identifier (capitalize)),
@@ -33,33 +33,39 @@ Liquid Statement - Capture, Identifier (_global_scope)
   Block (Text Block),
   Block (Liquid Output - Identifier (bad_val)),
   Block (Text Block),
-[-
+(
   Liquid Statement - Capture, Identifier (test_capture)
       Block (Text Block),
       Block (Liquid Output - Identifier (animal), Pipe, Identifier (upcase)),
       Block (Text Block)
--],
+),
   Block (Text Block),
   Block (Liquid Output - Identifier (test_capture)),
   Block (Text Block),
-(
+  Block (Liquid Statement - Increment, Identifier (counter)),
+  Block (Text Block),
+  Block (Liquid Statement - Increment, Identifier (counter)),
+  Block (Text Block),
+  Block (Liquid Statement - Decrement, Identifier (counter)),
+  Block (Text Block),
+{-
   Liquid Statement - Comment
       Block (Text Block),
       Block (Liquid Statement - Assign, Identifier (time), Equals, Number (0.000000)),
       Block (Text Block),
-  (
+  <-
     Liquid Statement - For, Identifier (count), In, Range (0 - 10)
           Block (Text Block),
-    {-
+    (-
       Liquid Statement - If, Identifier (count), Equals, Equals, Number (2.000000)
               Block (Text Block)
--},
+-),
           Block (Text Block),
           Block (Liquid Output - Identifier (count)),
           Block (Text Block),
           Block (Liquid Statement - Assign, Identifier (time), Equals, Identifier (time), Pipe, Identifier (plus), Colon, Number (1.000000)),
           Block (Text Block)
-),
+->,
       Block (Text Block)
+-}
 )
-]

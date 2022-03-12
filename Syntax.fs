@@ -133,6 +133,7 @@ let rec debug_token_to_string =
   | Nil -> "Nil"
   | Break -> "Break"
   | Continue -> "Continue"
+  | Contains -> "Contains"
   | Identifier parts -> sprintf "Identifier (%s)" (String.concat "->" parts)
   | Value v -> debug_liquid_value_to_string v
   | Range (s, e) -> sprintf "Range (%d - %d)" s e

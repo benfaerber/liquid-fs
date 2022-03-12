@@ -74,11 +74,27 @@ let eval_liquid_expression (outp, ctx: execution_context) tokens =
 
 let output_liquid_value (outp, ctx) v = outp + (v |> value_to_string), ctx
 
+let increment_value (outp, ctx: execution_context) id is_increment =
+  let inc_id = [ "_increment_variable_" ] @ id in
+
+  if ctx.ContainsKey inc_id then
+    match lookup_variable ctx inc_id with
+    | Number n ->
+      let new_val = n + (if is_increment then 1. else -1.) in
+
+      outp + (sprintf "%f" new_val), ctx.Add (inc_id, Number new_val)
+    | _ -> raise (System.ArgumentException ("Cannot increment non numeric value!"))
+  else
+    let init_val = if is_increment then 0. else -1. in outp + (sprintf "%f" init_val), ctx.Add (inc_id, Number init_val)
+
+
 let eval_liquid_statement (outp, ctx: execution_context) tokens =
   match tokens with
   | Assign :: Identifier var_name :: Eq :: tl ->
     let value_to_assign =
-      eval_liquid_expression (outp, ctx) tl in outp, ctx.Add ((var_name, value_to_assign))
+      eval_liquid_expression (outp, ctx) tl in outp, ctx.Add (var_name, value_to_assign)
+  | [ Increment; Identifier id ] -> increment_value (outp, ctx) id true
+  | [ Decrement; Identifier id ] -> increment_value (outp, ctx) id false
   | _ -> outp, ctx
 
 
