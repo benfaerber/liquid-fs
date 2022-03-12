@@ -20,7 +20,7 @@ let rec value_to_string =
   function
   | Boolean b -> if b then "true" else "false"
   | String s -> s
-  | Number n -> sprintf "%f" n
+  | Number n -> sprintf "%d" (int n)
   | NilValue -> "nil"
   | EmptyValue -> "empty"
   | List l ->
@@ -124,81 +124,82 @@ let range_to_list start_val end_val =
     |> List.map (fun v -> Number (int v))
   )
 
+let eval_if eval_next_scope (outp, ctx) children tokens is_flipped =
+  debug_print_tokens tokens
+  let check = eval_condition (outp, ctx) tokens in
+  let pcheck = if is_flipped then not check else check in
+
+  if pcheck then
+    let eval_folder acc dnode =
+      match dnode with
+      | Block bl -> eval_block acc bl
+      | Scope (sp, sc) -> eval_next_scope acc sp sc in
+
+    let scope_outp, scope_cxt =
+      children |> List.fold eval_folder (outp, ctx) in
+
+    (scope_outp, scope_cxt)
+  else
+    (outp, ctx)
+
+let eval_forloop eval_next_scope (outp, ctx) children item_name collection =
+  match collection |> extract_value ctx with
+  | Value (List lst) ->
+    let for_loop_iteration (ioutp, ictx: execution_context) item =
+      printfn "%s" (item |> value_to_string)
+
+      let eval_folder acc dnode =
+        match dnode with
+        | Block bl -> eval_block acc bl
+        | Scope (sp, sc) -> eval_next_scope acc sp sc in
+
+      let cap_outp, _ =
+        children
+        |> List.fold eval_folder (ioutp, ictx.Add (item_name, item)) in
+
+      cap_outp, ctx in
+
+    List.fold for_loop_iteration (outp, ctx) lst
+  | _ -> raise (System.ArgumentException ("Cannot loop over non list value!"))
+
+let eval_capture eval_next_scope (outp, ctx) children id =
+  let eval_folder acc dnode =
+    match dnode with
+    | Block bl -> eval_block acc bl
+    | Scope (sp, sc) -> eval_next_scope acc sp sc in
+
+  let cap_outp, cap_ctx =
+    children |> List.fold eval_folder (outp, ctx) in
+
+  match id |> List.head with
+  | primary_id when primary_id = global_scope_capture -> cap_outp, cap_ctx
+  | _ -> "", ctx.Add (id, String cap_outp)
+
+
 let rec eval_scope (outp, ctx: execution_context) parent children =
   match parent with
   | Liquid (_, tokens) ->
     match tokens with
-    | If :: tokens ->
-      debug_print_tokens tokens
-
-      if eval_condition (outp, ctx) tokens then
-        let eval_folder acc dnode =
-          match dnode with
-          | Block bl -> eval_block acc bl
-          | Scope (sp, sc) -> eval_scope acc sp sc in
-
-        let scope_outp, scope_cxt =
-          children |> List.fold eval_folder (outp, ctx) in
-
-        (outp + scope_outp, scope_cxt)
-      else
-        (outp, ctx)
-    | [ For; Identifier item; In; Range (rs, re) ] ->
-      let modified_for =
-        Liquid (
-          Statement,
-          [ For;
-            Identifier item;
-            In;
-            Value (range_to_list rs re) ]
-        ) in
-
-      eval_scope (outp, ctx) modified_for children
-    | [ For; Identifier item_name; In; collection ] ->
-      match collection |> extract_value ctx with
-      | Value (List lst) ->
-        let for_loop_iteration (ioutp, ictx: execution_context) item =
-          printfn "%s" (item |> value_to_string)
-
-          let eval_folder acc dnode =
-            match dnode with
-            | Block bl -> eval_block acc bl
-            | Scope (sp, sc) -> eval_scope acc sp sc in
-
-          let cap_outp, _ =
-            children
-            |> List.fold eval_folder (ioutp, ictx.Add (item_name, item)) in
-
-          cap_outp, ctx in
-
-        List.fold for_loop_iteration (outp, ctx) lst
-      | _ -> raise (System.ArgumentException ("Cannot loop over non list value!"))
-
+    | If :: tl -> eval_if eval_scope (outp, ctx) children tl false
+    | Unless :: tl -> eval_if eval_scope (outp, ctx) children tl true
+    | [ For; Identifier item_name; In; Range (rs, re) ] ->
+      eval_forloop eval_scope (outp, ctx) children item_name (Value (range_to_list rs re))
+    | [ For; Identifier item_name; In; collection ] -> eval_forloop eval_scope (outp, ctx) children item_name collection
     | Case :: tl -> (outp, ctx)
-    | Unless :: tl -> (outp, ctx)
+
     | Comment :: tl -> (outp, ctx)
-    | Capture :: Identifier id :: tl ->
-      let eval_folder acc dnode =
-        match dnode with
-        | Block bl -> eval_block acc bl
-        | Scope (sp, sc) -> eval_scope acc sp sc in
+    | Capture :: Identifier id :: _ -> eval_capture eval_scope (outp, ctx) children id
 
-      let cap_outp, cap_ctx =
-        children |> List.fold eval_folder (outp, ctx) in
-
-      match id |> List.head with
-      | primary_id when primary_id = global_scope_capture -> cap_outp, cap_ctx
-      | _ -> outp, ctx.Add (id, String cap_outp)
     | _ -> (outp, ctx)
   | _ -> raise (System.ArgumentException ("A scope must begin with a liquid block"))
 
-let per_node acc =
-  function
-  | Block block -> eval_block acc block
-  | Scope (parent, children) -> eval_scope acc parent children
-
 
 let rec interpret (ast: node list) =
+  let per_node acc =
+    function
+    | Block block -> eval_block acc block
+    | Scope (parent, children) -> eval_scope acc parent children
+
   // Output text, Execution Context
   let initial =
     "", Map.empty.Add ([ "environment" ], String "Liquid F#")

@@ -28,7 +28,7 @@ let interpret_file filename =
 let render_file filename =
   filename
   |> interpret_file
-  |> tap (fun r -> printfn "Rendered Liquid:\n------------\n%s\n------------" (r.Replace ("\n\n", "\n")))
+  |> tap (fun r -> printfn "Rendered Liquid:\n------------\n%s\n------------" ((r.Replace ("\n\n", "\n"))))
   |> write_file (sprintf "%s-rendered.html" (filename.Replace (".liquid", "")))
 
 let test () =
