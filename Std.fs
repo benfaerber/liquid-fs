@@ -219,11 +219,13 @@ let size =
 let slice_start llst lstart =
   match llst, lstart with
   | List lst, Number lstart -> List lst[int lstart ..]
+  | String str, Number lstart -> String str[int lstart ..]
   | _ -> NilValue
 
 let slice_start_end llst lstart lend =
   match llst, lstart, lend with
   | List lst, Number lstart, Number lend -> List lst[int lstart .. int lend]
+  | String str, Number lstart, Number lend -> String str[int lstart .. int lend]
   | _ -> NilValue
 
 // TODO Add support of negative slices

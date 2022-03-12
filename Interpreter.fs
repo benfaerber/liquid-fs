@@ -2,21 +2,19 @@ module Interpreter
 
 open Syntax
 
-type execution_context = Map<string list, token>
+type execution_context = Map<string list, liquid_value>
 
-let context =
-  Map.empty.Add ([ "enviroment" ], String "Liquid F#")
+let rec debug_context_to_string ctx =
+  let kv_to_string (k, v) =
+    let id_str = k |> String.concat "." in
+    let value = v |> debug_liquid_value_to_string in
+    sprintf "%s = %s" id_str value
 
-(*
-What can happen?
+  ctx
+  |> Map.toList
+  |> List.map kv_to_string
+  |> String.concat "\n"
 
-Assign / Increment / Decrement - The variable context is updated and passed to the next statement
-If / Else / Unless - A condition is checked from the variable context, a new scope is run
-Case - A variable is looked up from the variable context, pattern matching is applies
-
-Pipe - A function is called (lexical token is passed in)
-
-*)
 
 let rec value_to_string =
   function
@@ -30,137 +28,100 @@ let rec value_to_string =
     |> List.map value_to_string
     |> String.concat ", "
 
-
-let raise_arg_error count =
-  raise (System.ArgumentException (sprintf "Expected a function with %d arguments!" count))
-
-let eval_filter =
+let extract_value (ctx: execution_context) =
   function
-  | [ Value v; Pipe; Identifier func_name; Colon; Value p1; Comma; Value p2 ] ->
-    let filter =
-      match Filter.get func_name 3 with
-      | Filter.ThreeArgument f -> f
-      | _ -> raise_arg_error 3 in
+  | Identifier id -> Value ctx.[id]
+  | other -> other
 
-    filter v p1 p2
-  | [ Value v; Pipe; Identifier func_name; Colon; Value p1 ] ->
-    let filter =
-      match Filter.get func_name 2 with
-      | Filter.TwoArgument f -> f
-      | _ -> raise_arg_error 2 in
+let extract_non_filter_value (ctx: execution_context) =
+  function
+  | Identifier id, Colon -> Identifier id
+  | Identifier id, _ -> extract_value ctx (Identifier id)
+  | other, _ -> other
 
-    filter v p1
-  | [ Value v; Pipe; Identifier func_name ] ->
-    let filter =
-      match Filter.get func_name 1 with
-      | Filter.OneArgument f -> f
-      | _ -> raise_arg_error 1 in
+let eval_liquid_expression (outp, ctx: execution_context) tokens =
+  match tokens with
+  | init_value :: Pipe :: Identifier func_name :: rest ->
+    let p_init_value = init_value |> extract_value ctx in
+    debug_print_tokens rest
 
-    filter v
+    let final_rest =
+      if rest.Length > 0 then
+        [ rest |> List.rev |> List.head |> extract_value ctx ]
+      else
+        [] in
+
+    let fill_params =
+      List.mapi (fun index _ -> extract_non_filter_value ctx (rest.[index], rest.[index + 1])) in
+
+    let p_func_params =
+      fill_params rest[.. rest.Length - 2] @ final_rest in
+
+    let recon_expr =
+      p_init_value
+      :: Pipe :: Identifier func_name :: p_func_params in
+
+    recon_expr |> Filter.eval
+  | [ Value v ] -> v
+  | [ Identifier id ] -> ctx.[id]
   | _ -> NilValue
 
-let rec interpret (ast: node list) =
+let output_liquid_value (outp, ctx) v = outp + (v |> value_to_string), ctx
 
-  let eval_liquid_output_block (outp, ctx) tokens =
-    match tokens with
-    | _ :: Pipe :: _ as ts -> outp + (ts |> eval_filter |> value_to_string), ctx
-    | [ Value v ] -> outp + (value_to_string v), ctx
-    | _ -> outp, ctx
+let eval_liquid_statement (outp, ctx: execution_context) tokens =
+  match tokens with
+  | Assign :: Identifier var_name :: Eq :: tl ->
+    let value_to_assign =
+      eval_liquid_expression (outp, ctx) tl in outp, ctx.Add ((var_name, value_to_assign))
+  | _ -> outp, ctx
 
-  let eval_liquid_statement_block (outp, ctx) tokens = outp, ctx
 
-  let eval_block (outp, ctx) =
-    function
-    | Text txt -> (outp + txt, ctx)
-    | Liquid (Output, tokens) -> eval_liquid_output_block (outp, ctx) tokens
-    | Liquid (Statement, tokens) -> eval_liquid_statement_block (outp, ctx) tokens
+let eval_block (outp, ctx) =
+  function
+  | Text txt -> outp + txt, ctx
+  | Liquid (Output, tokens) ->
+    eval_liquid_expression (outp, ctx) tokens
+    |> output_liquid_value (outp, ctx)
+  | Liquid (Statement, tokens) -> eval_liquid_statement (outp, ctx) tokens
 
-  let rec eval_scope (outp, ctx) parent children =
-    match parent with
-    | Liquid (_, tokens) ->
-      let scope_type = tokens |> List.head in
+let rec eval_scope (outp, ctx) parent children =
+  match parent with
+  | Liquid (_, tokens) ->
+    let scope_type = tokens |> List.head in
 
-      match scope_type with
-      | If -> (outp, ctx)
-      | For -> (outp, ctx)
-      | Case -> (outp, ctx)
-      | Unless -> (outp, ctx)
-      | Comment -> (outp, ctx)
-      | Capture ->
-        let eval_folder acc dnode =
-          match dnode with
-          | Block bl -> eval_block acc bl
-          | Scope (sp, sc) -> eval_scope acc sp sc in
+    match scope_type with
+    | If -> (outp, ctx)
+    | For -> (outp, ctx)
+    | Case -> (outp, ctx)
+    | Unless -> (outp, ctx)
+    | Comment -> (outp, ctx)
+    | Capture ->
+      let eval_folder acc dnode =
+        let outp, ctx = acc in
+        // ctx |> debug_context_to_string |> printfn "%s"
 
-        let res =
-          children |> List.fold eval_folder (outp, ctx) in
+        match dnode with
+        | Block bl -> eval_block acc bl
+        | Scope (sp, sc) -> eval_scope acc sp sc in
 
-        res
-      | _ -> (outp, ctx)
+      let res =
+        children |> List.fold eval_folder (outp, ctx) in
+
+      res
     | _ -> (outp, ctx)
+  | _ -> raise (System.ArgumentException ("A scope must begin with a liquid block"))
 
-  let per_node acc tnode =
-    match tnode with
-    | Block b -> eval_block acc b
-    | Scope (b, s) -> eval_scope acc b s
+let per_node acc =
+  function
+  | Block block -> eval_block acc block
+  | Scope (parent, children) -> eval_scope acc parent children
 
+
+let rec interpret (ast: node list) =
   // Output text, Execution Context
-  let initial = "", Map.empty
+  let initial =
+    "", Map.empty.Add (([ "environment" ], String "Liquid F#"))
 
-  let final_output, final_context =
-    List.fold per_node initial ast in
+  let final_output, _ = List.fold per_node initial ast in
 
-  printfn "Rendered Liquid:\n------------\n%s\n------------" final_output
-
-// ast
-// |> List.map (fun x -> x |> Tree.syntax_tree_to_string)
-// |> String.concat "\n\n\n"
-// |> printfn "%s"
-
-// let test () =
-//   let alpha_list =
-//     List (
-//       "abcdefghi"
-//       |> Seq.toList
-//       |> List.map (fun c -> String (c.ToString ()))
-//     )
-
-// let tests =
-//   [ "apply_capitalize",
-//     [ Value (String "ben");
-//       Pipe;
-//       Identifier [ "capitalize" ] ];
-
-//     "apply_remove",
-//     [ Value (String "hello world");
-//       Pipe;
-//       Identifier [ "remove" ];
-//       Colon;
-//       Value (String " ") ];
-
-//     "split by comma",
-//     [ Value (String "a, b, c, d");
-//       Pipe;
-//       Identifier [ "split" ];
-//       Colon;
-//       Value (String ", ") ];
-
-
-//     "slice array (1 argument)",
-//     [ Value alpha_list;
-//       Pipe;
-//       Identifier [ "slice" ];
-//       Colon;
-//       Value (Number 2) ];
-
-//     "slice array (2 arguments)",
-//     [ Value alpha_list;
-//       Pipe;
-//       Identifier [ "slice" ];
-//       Colon;
-//       Value (Number 1);
-//       Comma;
-//       Value (Number 4) ] ]
-
-// tests
-// |> List.iter (fun (name, tokens) -> printfn "%s:\n  %s" name (tokens |> eval_filter |> liquid_value_to_string))
+  final_output

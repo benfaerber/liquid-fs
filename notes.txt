@@ -1,0 +1,32 @@
+Interpreter
+
+  Preprocessor
+    Converts ranges to lists
+
+  Page Preprocessor
+    Block Preprocessor
+      Liquid Line Processor
+        Liquid Line Preprocessor
+
+          Assignments
+            Split into 2 parts left and right
+            Evaluate right
+            Place results of right evalution into left ID
+
+            Assign, ID(var), Eq, Either(Literal, Identifer, FilterChain)
+            First run Preprocessor to convert identifiers to values
+            Second evaluate the value after the Eq
+            Add the var key to the ctx hashtable
+
+          Filter Evaluation
+            From left to right evalutate filters
+            Take this example
+            {% assign animal = "horse" %}
+            {{ animal | capitalize | slice: 2 }}
+            First the Preprocessor is run
+            "horse" | capitalize | slice: 2
+            Second the first filter is evaluated
+            "Horse" | slice: 2
+            Third the final filter is evaluates
+            "rse"
+            This value is returned

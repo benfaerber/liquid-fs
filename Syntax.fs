@@ -73,7 +73,7 @@ type block =
   | Liquid of block_type * token list
   | Text of string
 
-let rec liquid_value_to_string =
+let rec debug_liquid_value_to_string =
   function
   | Boolean b -> sprintf "Boolean (%s)" (if b then "True" else "False")
   | String s -> sprintf "String (%s)" s
@@ -84,11 +84,11 @@ let rec liquid_value_to_string =
     sprintf
       "List (%s)"
       (l
-       |> List.map liquid_value_to_string
+       |> List.map debug_liquid_value_to_string
        |> String.concat ", ")
 
 
-let rec token_to_string =
+let rec debug_token_to_string =
   function
   | Assign -> "Assign"
   | Increment -> "Increment"
@@ -129,11 +129,11 @@ let rec token_to_string =
   | Break -> "Break"
   | Continue -> "Continue"
   | Identifier parts -> sprintf "Identifier (%s)" (String.concat "->" parts)
-  | Value v -> liquid_value_to_string v
+  | Value v -> debug_liquid_value_to_string v
   | Range (s, e) -> sprintf "Range (%d - %d)" s e
 
 
-let block_to_string block =
+let debug_block_to_string block =
   (match block with
    | Text _ -> "Text Block"
    | Liquid (block_type, tokens) ->
@@ -144,7 +144,7 @@ let block_to_string block =
 
      let token_string =
        (tokens
-        |> List.map (fun t -> token_to_string t)
+        |> List.map debug_token_to_string
         |> String.concat ", ") in
 
      sprintf "Liquid %s - %s" block_name token_string)
@@ -152,10 +152,16 @@ let block_to_string block =
 let reverse_tail lst =
   lst |> List.rev |> List.tail |> List.rev
 
-let identifier_to_string id =
+let debug_identifier_to_string id =
   match id with
   | Identifier parts -> String.concat "->" parts
   | _ -> ""
+
+let debug_print_tokens tokens =
+  tokens
+  |> List.map debug_token_to_string
+  |> String.concat ", "
+  |> printfn "%s"
 
 type node =
   | Block of block

@@ -3,27 +3,14 @@ module Filter
 open Syntax
 open System.Text.RegularExpressions
 
-(*
-  How params are passed:
-  self
-  self param1 param2
-
-  Examples
-
-  {{ -17 | abs }}
-  abs = self -> liquid_value
-  {{ "/my/fancy/url" | append: ".html" }}
-  append = self -> param1 -> liquid_value
-*)
-
-// Refering to the number of parameters the function accepts
-
+// Referring to the number of parameters a function was provided
 type parameter_count =
   | OneParam
   | TwoParam
   | ThreeParam
   | FourParam
 
+// Referring to the number of arguments a function accepts
 type liquid_filter =
   | OneArgument of (liquid_value -> liquid_value)
   | TwoArgument of (liquid_value -> liquid_value -> liquid_value)
@@ -39,19 +26,12 @@ let get_param_count =
   | 4 -> FourParam
   | _ -> raise (System.ArgumentException ("Invalid param count!"))
 
-
-
-let nyi =
+let param_count_to_int =
   function
-  | s ->
-    printfn "Not yet implemented!"
-    s
-
-let odne =
-  function
-  | s ->
-    printfn "Overload does not exist!"
-    s
+  | OneParam -> 1
+  | TwoParam -> 2
+  | ThreeParam -> 3
+  | FourParam -> 4
 
 
 let lookup_filter =
@@ -94,7 +74,74 @@ let lookup_filter =
   | "truncatewords", TwoParam -> TwoArgument Std.truncatewords
   | "truncatewords", ThreeParam -> ThreeArgument Std.truncatewords_custom
   | "upcase", OneParam -> OneArgument Std.upcase
-  | _ -> raise (System.ArgumentException ("Function does not exists!"))
+  | fname, pcount ->
+    raise (
+      System.ArgumentException (
+        sprintf "Function \"%s\" with %d parameters does not exists!" fname (pcount |> param_count_to_int)
+      )
+    )
 
 let get filter_id param_count =
   lookup_filter (filter_id |> List.head, get_param_count param_count)
+
+let raise_arg_error count =
+  raise (System.ArgumentException (sprintf "Expected a function with %d arguments!" count))
+
+let rec eval =
+  function
+  | [ Value v; Pipe; Identifier func_name; Colon; Value p1; Comma; Value p2 ] ->
+    let filter =
+      match get func_name 3 with
+      | ThreeArgument f -> f
+      | _ -> raise_arg_error 3 in
+
+    filter v p1 p2
+  | Value v :: Pipe :: Identifier func_name :: Colon :: Value p1 :: Comma :: Value p2 :: tl ->
+    let filter =
+      match get func_name 3 with
+      | ThreeArgument f -> f
+      | _ -> raise_arg_error 3 in
+
+    printfn "F3:"
+    debug_print_tokens tl
+    eval ([ Value (filter v p1 p2) ] @ tl)
+
+  | [ Value v; Pipe; Identifier func_name; Colon; Value p1 ] ->
+    let filter =
+      match get func_name 2 with
+      | TwoArgument f -> f
+      | _ -> raise_arg_error 2 in
+
+    filter v p1
+  | Value v :: Pipe :: Identifier func_name :: Colon :: Value p1 :: tl ->
+    let filter =
+      match get func_name 2 with
+      | TwoArgument f -> f
+      | _ -> raise_arg_error 2 in
+
+    printfn "F2:"
+    debug_print_tokens ([ Value (filter v p1) ] @ tl)
+    eval ([ Value (filter v p1) ] @ tl)
+
+  | [ Value v; Pipe; Identifier func_name ] ->
+    let filter =
+      match get func_name 1 with
+      | OneArgument f -> f
+      | _ -> raise_arg_error 1 in
+
+    filter v
+  | Value v :: Pipe :: Identifier func_name :: tl ->
+    let filter =
+      match get func_name 1 with
+      | OneArgument f -> f
+      | _ -> raise_arg_error 1 in
+
+    printfn "F1:"
+    debug_print_tokens ([ Value (filter v) ] @ tl)
+    eval ([ Value (filter v) ] @ tl)
+
+  | [ Value v ] -> v
+  | other ->
+    printfn "Other Filter:"
+    debug_print_tokens other
+    NilValue

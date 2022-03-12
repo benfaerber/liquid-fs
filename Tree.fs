@@ -27,10 +27,10 @@ let random_delims () =
   | _ -> "(", ")"
 
 
-let syntax_tree_to_string =
+let debug_syntax_tree_to_string =
   let rec aux tabs =
     function
-    | Block b -> sprintf "%sBlock (%s)" (get_tabs tabs) (block_to_string b)
+    | Block b -> sprintf "%sBlock (%s)" (get_tabs tabs) (debug_block_to_string b)
     | Scope (parent, children) ->
       let open_delim, close_delim = random_delims () in
 
@@ -38,7 +38,7 @@ let syntax_tree_to_string =
         "%s\n%s%s\n%s%s\n%s"
         open_delim
         (get_tabs (tabs))
-        (block_to_string parent)
+        (debug_block_to_string parent)
         (get_tabs (tabs))
 
         (List.map (fun c -> aux (tabs + 1) c) children
@@ -149,7 +149,6 @@ let rec construct_syntax_tree (blocks: block list) =
       | index when index > end_index -> None
       | index ->
         sleep ()
-        // printfn "Index: %d" index
 
         (match blocks.[index] with
          | Text t -> Some (Block (Text t), index + 1)

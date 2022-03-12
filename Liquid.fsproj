@@ -13,6 +13,7 @@
     <Compile Include="Std.fs" />
     <Compile Include="Filter.fs" />
     <Compile Include="Interpreter.fs" />
+    <Compile Include="Liquid.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -95,8 +95,7 @@ let match_or_fail s regex modifier =
   else
     None, s
 
-let string_regex =
-  "^(\'(?:.+?)(?:[^\\\\]\')|\"(?:.+?)(?:[^\\\\]\"))"
+let string_regex = "^(\"[^\"]*\"|\'[^\"]*\')"
 
 let lex_string (s: string) =
   match_or_fail s string_regex (fun literal -> Value (String (literal[1 .. literal.Length - 2])))

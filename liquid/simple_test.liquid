@@ -1,10 +1,22 @@
 {{ "horse" | capitalize }}
 {{ "a, b, c, d" | split: ", " }}
-
+{% assign animal = "sheep" %}
+{% assign time = 10 %}
+{% assign screaming = "i like dogs" | upcase %}
 My Blog Post
-{{ "Lorem ipsum dolor, sit amet consectetur adipisicing elit." | truncate: 15 }}
+{{ "Lorem ipsum dolor, sit amet consectetur adipisicing elit." |    truncate: 15 }}
 
 {{ "dog" }}
+
+{{ animal }}
+{{ screaming }}
+{{ animal | capitalize | remove : "h" | slice: 0, 2 }}
+
+{% assign slicer = 2 %}
+{{ "slice with var" | slice: slicer }}
+
+{% assign time = time | plus: 6 %}
+{{ time }}
 {% comment %}
 {% assign time = 0 %}
 {% for count in (0..10) %}
