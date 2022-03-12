@@ -17,6 +17,16 @@ My Blog Post
 
 {% assign time = time | plus: 6 %}
 {{ time }}
+
+{% assign bad_val = nil %}
+{{ bad_val }}
+
+{% capture test_capture %}
+My favorite animal is a {{ animal | upcase }}!!!
+{% endcapture %}
+
+{{ test_capture }}
+
 {% comment %}
 {% assign time = 0 %}
 {% for count in (0..10) %}

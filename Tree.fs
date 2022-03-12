@@ -173,7 +173,7 @@ let rec construct_syntax_tree (blocks: block list) =
     Liquid (
       Statement,
       [ Capture;
-        Identifier [ "_global_scope" ] ]
+        Identifier [ global_scope_capture ] ]
     ) in
 
   [ Scope (global_scope, main_children) ]

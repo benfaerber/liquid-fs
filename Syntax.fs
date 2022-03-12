@@ -21,6 +21,13 @@ type liquid_value =
   | NilValue
   | EmptyValue
 
+type operator =
+  | EqEq
+  | Ne
+  | Gte
+  | Lte
+  | Gt
+  | Lt
 
 type token =
   | Assign
@@ -45,12 +52,6 @@ type token =
   | With
   | In
   | Eq
-  | EqEq
-  | Ne
-  | Gt
-  | Lt
-  | Gte
-  | Lte
   | Or
   | And
   | Colon
@@ -58,9 +59,11 @@ type token =
   | Pipe
   | Blank
   | Empty
+  | Contains
   | Nil
   | Break
   | Continue
+  | Operator of operator
   | Identifier of string list
   | Value of liquid_value
   | Range of int * int
@@ -112,12 +115,14 @@ let rec debug_token_to_string =
   | Capture -> "Capture"
   | EndCapture -> "EndCapture"
   | Eq -> "Equals"
-  | EqEq -> "TestEquality"
-  | Ne -> "NotEquals"
-  | Gt -> "GreaterThan"
-  | Lt -> "LessThan"
-  | Gte -> "GreaterThanEquals"
-  | Lte -> "LessThanEquals"
+  | Operator op ->
+    (match op with
+     | EqEq -> "TestEquality"
+     | Ne -> "NotEquals"
+     | Gt -> "GreaterThan"
+     | Lt -> "LessThan"
+     | Gte -> "GreaterThanEquals"
+     | Lte -> "LessThanEquals")
   | Or -> "Or"
   | And -> "And"
   | Colon -> "Colon"
@@ -166,3 +171,5 @@ let debug_print_tokens tokens =
 type node =
   | Block of block
   | Scope of block * node list
+
+let global_scope_capture = "_global_scope"

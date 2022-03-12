@@ -28,9 +28,15 @@ let rec value_to_string =
     |> List.map value_to_string
     |> String.concat ", "
 
+let lookup_variable (ctx: execution_context) id =
+  if ctx.ContainsKey id then
+    ctx.[id]
+  else
+    NilValue
+
 let extract_value (ctx: execution_context) =
   function
-  | Identifier id -> Value ctx.[id]
+  | Identifier id -> Value (lookup_variable ctx id)
   | other -> other
 
 let extract_non_filter_value (ctx: execution_context) =
@@ -63,7 +69,7 @@ let eval_liquid_expression (outp, ctx: execution_context) tokens =
 
     recon_expr |> Filter.eval
   | [ Value v ] -> v
-  | [ Identifier id ] -> ctx.[id]
+  | [ Identifier id ] -> lookup_variable ctx id
   | _ -> NilValue
 
 let output_liquid_value (outp, ctx) v = outp + (v |> value_to_string), ctx
@@ -87,27 +93,24 @@ let eval_block (outp, ctx) =
 let rec eval_scope (outp, ctx) parent children =
   match parent with
   | Liquid (_, tokens) ->
-    let scope_type = tokens |> List.head in
-
-    match scope_type with
-    | If -> (outp, ctx)
-    | For -> (outp, ctx)
-    | Case -> (outp, ctx)
-    | Unless -> (outp, ctx)
-    | Comment -> (outp, ctx)
-    | Capture ->
+    match tokens with
+    | If :: tl -> (outp, ctx)
+    | For :: tl -> (outp, ctx)
+    | Case :: tl -> (outp, ctx)
+    | Unless :: tl -> (outp, ctx)
+    | Comment :: tl -> (outp, ctx)
+    | Capture :: Identifier id :: tl ->
       let eval_folder acc dnode =
-        let outp, ctx = acc in
-        // ctx |> debug_context_to_string |> printfn "%s"
-
         match dnode with
         | Block bl -> eval_block acc bl
         | Scope (sp, sc) -> eval_scope acc sp sc in
 
-      let res =
+      let cap_outp, cap_ctx =
         children |> List.fold eval_folder (outp, ctx) in
 
-      res
+      match id |> List.head with
+      | primary_id when primary_id = global_scope_capture -> cap_outp, cap_ctx
+      | _ -> outp, ctx.Add (id, String cap_outp)
     | _ -> (outp, ctx)
   | _ -> raise (System.ArgumentException ("A scope must begin with a liquid block"))
 
@@ -120,7 +123,7 @@ let per_node acc =
 let rec interpret (ast: node list) =
   // Output text, Execution Context
   let initial =
-    "", Map.empty.Add (([ "environment" ], String "Liquid F#"))
+    "", Map.empty.Add ([ "environment" ], String "Liquid F#")
 
   let final_output, _ = List.fold per_node initial ast in
 
