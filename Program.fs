@@ -1,5 +1,11 @@
-﻿let runner () =
-  Liquid.render_file "./liquid/case_test.liquid"
-  Liquid.test () |> ignore
+﻿[<EntryPoint>]
+let main (args) =
+  let filename = args |> Array.toList |> List.tryHead in
 
-runner ()
+  match filename with
+  | Some fname ->
+    Liquid.render_file fname
+    0
+  | None ->
+    printfn "No liquid file provided!"
+    1

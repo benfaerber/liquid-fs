@@ -1,18 +1,19 @@
-<-
+{-
 Liquid Statement - Capture, Identifier (_global_scope)
   Block (Text Block),
-  Block (Liquid Statement - Assign, Identifier (animal), Equals, String (horse)),
-  Block (Text Block),
-<
-  Liquid Statement - Case, Identifier (animal)
+(-
+  Liquid Statement - For, Identifier (i), In, Range (0 - 10)
       Block (Text Block),
-      Block (Liquid Statement - When, String (horse)),
-      Block (Text Block),
-      Block (Liquid Statement - When, String (sheep)),
-      Block (Text Block),
-      Block (Liquid Statement - When, String (penguin)),
-      Block (Text Block),
-      Block (Liquid Statement - Else),
+      Block (Liquid Output - Identifier (i)),
       Block (Text Block)
->
-->
+-),
+  Block (Text Block),
+  Block (Liquid Statement - Assign, Identifier (fruits), Equals, String (apple, pear, banana, peach), Pipe, Identifier (split), Colon, String (, )),
+  Block (Text Block),
+(-
+  Liquid Statement - For, Identifier (fruit), In, Identifier (fruits)
+      Block (Text Block),
+      Block (Liquid Output - Identifier (fruit)),
+      Block (Text Block)
+-)
+-}
