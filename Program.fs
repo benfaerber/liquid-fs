@@ -1,5 +1,5 @@
 ﻿[<EntryPoint>]
-let main (args) =
+let main args =
   let filename = args |> Array.toList |> List.tryHead in
 
   match filename with

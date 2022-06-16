@@ -185,7 +185,7 @@ let rec eval_scope (outp, ctx: execution_context) parent children =
     | [ For; Identifier item_name; In; Range (rs, re) ] ->
       eval_forloop eval_scope (outp, ctx) children item_name (Value (range_to_list rs re))
     | [ For; Identifier item_name; In; collection ] -> eval_forloop eval_scope (outp, ctx) children item_name collection
-    | Case :: tl -> (outp, ctx)
+    | [ Case; Identifier case_id ] -> (outp, ctx)
 
     | Comment :: tl -> (outp, ctx)
     | Capture :: Identifier id :: _ -> eval_capture eval_scope (outp, ctx) children id
